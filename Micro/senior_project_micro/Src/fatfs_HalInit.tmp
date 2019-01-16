@@ -1,0 +1,2 @@
+#t/*## FatFS: Link the SD driver ###########################*/
+#tretSD = FATFS_LinkDriver(&SD_Driver, SD_Path);

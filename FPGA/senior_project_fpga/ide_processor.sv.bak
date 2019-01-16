@@ -1,0 +1,7 @@
+module ide_processor(
+	input [1:0]cs,
+	input 
+);
+
+//DIOR_ in datasheet refers to D[7:0]
+//DIOW_ in datasheet refers to D[15:8]

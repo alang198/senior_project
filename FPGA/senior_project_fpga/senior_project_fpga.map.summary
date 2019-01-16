@@ -1,0 +1,14 @@
+Analysis & Synthesis Status : Successful - Tue Jan 08 19:18:38 2019
+Quartus Prime Version : 16.1.0 Build 196 10/24/2016 SJ Lite Edition
+Revision Name : senior_project_fpga
+Top-level Entity Name : senior_project_fpga
+Family : Cyclone IV E
+Total logic elements : 0
+    Total combinational functions : 0
+    Dedicated logic registers : 0
+Total registers : 0
+Total pins : 154
+Total virtual pins : 0
+Total memory bits : 0
+Embedded Multiplier 9-bit elements : 0
+Total PLLs : 0
