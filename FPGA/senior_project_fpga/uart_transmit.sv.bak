@@ -1,0 +1,4 @@
+module uart_transmit(
+	input logic start,
+	output logic data_out
+);

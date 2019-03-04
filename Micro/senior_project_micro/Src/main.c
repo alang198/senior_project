@@ -9,7 +9,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -49,9 +49,13 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 #include "fatfs.h"
+
+/* USER CODE BEGIN Includes */
 #include <string.h>
 #include <stdlib.h>
+/* USER CODE END Includes */
 
+/* Private variables ---------------------------------------------------------*/
 //Handle Types (put these in read/write APIs to serial ports)
 SD_HandleTypeDef hsd;
 
@@ -60,6 +64,12 @@ SPI_HandleTypeDef hspi2;
 
 UART_HandleTypeDef huart4;
 
+/* USER CODE BEGIN PV */
+/* Private variables ---------------------------------------------------------*/
+
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
 //Config funtion prototypes
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -68,64 +78,90 @@ static void MX_SPI2_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_UART4_Init(void);
 
-//global variables
-uint8_t image_num = 0;
-char gdi_name[4] = ".gdi";
-uint8_t cmd_process_state = 0;
-unsigned int junk = 0;
-
-//related to managing the .gdi files
-uint16_t lba[21] = {0};
-uint8_t data_type[21] = {0};
-FIL files[21];
-uint8_t file_count = 0;
-uint8_t cmd_buf[11] = {0};
-uint8_t data_buf[2352] = {0};
-uint8_t data_buf1[2352] = {0};
-uint8_t gdda_playing = 0;
-
-FIL gdi_file;
-
+/* USER CODE BEGIN PFP */
+/* Private function prototypes -----------------------------------------------*/
 //Read .gdi
 uint8_t open_gdi(void);
 void process_cmd(uint8_t);
 void get_toc(void);
 void req_ses(void);
 void transmit_71(void);
-void test_unit(void);
+//void test_unit(void); (do on FPGA)
 void request_mode(void);
 void req_error(void);
 void read_cd(uint8_t);
 void get_scd(void);
 void cd_play(void);
 
+/* USER CODE END PFP */
+
+/* USER CODE BEGIN 0 */
+//global variables
+uint8_t image_num = 0;
+char gdi_name[4] = "GDI";
+uint8_t cmd_process_state = 0;
+unsigned int junk = 0;
+char path_to_change[32] = "";
+
+FATFS sd_card;
+
+//related to managing the .gdi files
+uint16_t lba[10] = {0};
+uint8_t data_type[10] = {0};
+FIL files[10];
+uint8_t file_count = 0;
+uint8_t cmd_buf[11] = {0};
+uint8_t data_buf[2352] = {0};
+uint8_t data_buf1[2352] = {0};
+uint8_t gdda_playing = 0;
+uint8_t error_code = 0xFF;
+
+FIL gdi_file;
+/* USER CODE END 0 */
+
 int main(void)
 {
+
+  /* USER CODE BEGIN 1 */
 	//fatfs related variables
-	FATFS sd_card;
+	
 	uint8_t gdi_open_result;
 	char gdi_string[64] = "";
+	char path_copy[31] = "";
+	char file_name[13] = "";
 	
 	//other variables
 	uint8_t count = 0;
 	char * tok_back;
 	char token[2] = " ";
 	uint8_t uart_buf = 0;
-	
-	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-	HAL_Init();
+  /* USER CODE END 1 */
 
-	/* Configure the system clock */
-	SystemClock_Config();
+  /* MCU Configuration----------------------------------------------------------*/
 
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	MX_SDIO_SD_Init();
-	MX_FATFS_Init();
-	MX_SPI2_Init();
-	MX_SPI1_Init();
-	MX_UART4_Init();
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_SDIO_SD_Init();
+  MX_FATFS_Init();
+  MX_SPI2_Init();
+  MX_SPI1_Init();
+  MX_UART4_Init();
+
+  /* USER CODE BEGIN 2 */
 	//mount successful
 	if(f_mount(&sd_card, SD_Path, 1) == FR_OK){
 		
@@ -134,9 +170,9 @@ int main(void)
 			gdi_open_result = open_gdi();
 			if((gdi_open_result == 0) || (gdi_open_result == 1)) break;
 		}
-		//reached end, no cycling yet
+		//reached end, no images found
 		if(gdi_open_result == 1){
-			//display "no disc"
+			//transmit error code via UART
 			return 0;
 		}
 		
@@ -149,46 +185,59 @@ int main(void)
 		while(count < file_count){
 			f_gets(gdi_string, 64, &gdi_file); //read line by line
 			
-			tok_back = strtok(gdi_string, token); //get file number (and discard will keep track using array position)
+			tok_back = strtok(gdi_string, token); //get file number (and discard, will keep track using array position)
 			tok_back = strtok(NULL, token); //get LBA (store in int array)
 			lba[count] = atoi(tok_back);		  //store LBA
 			tok_back = strtok(NULL, token); //get datatype (4 = data, 0 = audio) and store
 			data_type[count] = atoi(tok_back);  //store datatype
 			tok_back = strtok(NULL, token); //get sector size (can discard, always 2352)
 			tok_back = strtok(NULL, token); //get file name, create entry in file pointer array and open
-			if(f_open(&files[count], gdi_string, FA_READ) != FR_OK){
+			
+			strcpy(file_name, tok_back); //isolate file name
+			strcpy(path_copy, path_to_change); //get path
+			strcat(path_copy, file_name); //append file name to path
+			
+			if(f_open(&files[count], path_copy, FA_READ) != FR_OK){
 				//display "invalid gdi"
+				//transmit error code to FPGA
+				HAL_UART_Transmit(&huart4, &error_code, 1, HAL_MAX_DELAY);
 				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET); //turn on error LED
 				return 1;
-			} //don't need offset (it's always 0), go back to f_gets and repeat for the rest of the files
-
-			
-			//add 150 offset to tracks 1 & 3
-			lba[0] = lba[0] + 150;
-			lba[2] = lba[2] + 150;
+			} 
 			
 			count = count + 1;
-		}
+		} //don't need offset (it's always 0 (sans tracks 1&3)), go back to f_gets and repeat for the rest of the files
+		
+		//add 150 offset to tracks 1 & 3
+		lba[0] = lba[0] + 150;
+		lba[2] = lba[2] + 150;
 	}
 	//could not mount
 	else{
 		//display "no disc"
+		HAL_UART_Transmit(&huart4, &error_code, 1, HAL_MAX_DELAY);
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET); //turn on error LED
 		return 1;
 	}
+  /* USER CODE END 2 */
 
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+  /* USER CODE END WHILE */
 
-	while (1){
-		//poll for UART message from FPGA
-		uart_buf = 0;
-		HAL_UART_Receive(&huart4, &uart_buf, 1, HAL_MAX_DELAY);
-		//message recieved
-		if(uart_buf != 0){
-			HAL_UART_Receive(&huart4, cmd_buf, 11, HAL_MAX_DELAY); //get rest of the cmd
-			process_cmd(uart_buf);
-		}
+  /* USER CODE BEGIN 3 */
+	//poll for UART message from FPGA
+	uart_buf = 0;
+	HAL_UART_Receive(&huart4, &uart_buf, 1, HAL_MAX_DELAY);
+	//message recieved
+	if(uart_buf != 0){
+		HAL_UART_Receive(&huart4, cmd_buf, 11, HAL_MAX_DELAY); //get rest of the cmd
+		process_cmd(uart_buf);
 	}
-	
+  }
+  
 
 }
 //this function handles the opening of the .gdi file
@@ -196,7 +245,6 @@ uint8_t open_gdi(){
 	DIR directory; //empty directory variable
 	FRESULT result;
 	char path_to_search[16] = "";
-	char path_to_change[16] = "";
 	char file_exten[4];
 	char image_num_ch[4];
 	FILINFO fno;
@@ -228,9 +276,10 @@ uint8_t open_gdi(){
 				strcat(path_to_search, fno.fname);
 				f_open(&gdi_file, path_to_search, FA_READ);
 				
-				strcpy(path_to_change, "/disc");
+				strcpy(path_to_change, "disc");
 				strcat(path_to_change, image_num_ch);
-				f_chdir(path_to_change); //change logical directory
+				strcat(path_to_change, "/");
+				//f_chdir(path_to_change); //change logical directory (doesn't work)
 				
 				return 0;
 			}
@@ -252,13 +301,13 @@ uint8_t open_gdi(){
 void process_cmd(uint8_t cmd){
 	
 	switch(cmd){
-		//TEST_UNIT (note: actual command is 0x00, ice lists it as 0x70 for some reason though)
-		case 0x00:
-		case 0x70:
-			test_unit();
-			break;
+		//TEST_UNIT (note: actual TEST_UNIT is 0x00, 0x70 is a security prep)
+		//case 0x00:
+		//case 0x70:
+			//test_unit();
+			//break;
 		
-		//REQ_STAT (get CD status) not used in ice (used in NullDC)
+		//REQ_STAT (get CD status) not used in ice (used in NullDC, impliment in the future)
 		case 0x10:
 			break;
 		
@@ -289,7 +338,7 @@ void process_cmd(uint8_t cmd){
 			req_ses();
 			break;
 		
-		//CD_OPEN (open disc tray, the system is a top loader so like this would ever be used LOL) goes unused in ice
+		//CD_OPEN (open disc tray, the system is a top loader so like this would ever be used LOL)
 		//actually does nothing
 		//case 0x16:
 		//	break;
@@ -335,18 +384,32 @@ void process_cmd(uint8_t cmd){
 void get_toc(){
 	
 	uint16_t calc = 0;
-	uint32_t toc_buf[102] = {0};
+	uint16_t count = 0;
+	uint8_t temp[409];
 	
 	//high density TOC
 	if((cmd_buf[0] & 0x01) == 0x01){
-		//NOTE: GET_TOC only gets 102 entires of the 128 (the rest are reserved so the system does not need them)
-		//NOTE: since track 1&2 are related to the single density part so fill them with 0xF
-		toc_buf[0] = 0xFFFFFFFF; //brute force, don't feel like looking up how to properly do this
-		toc_buf[1] = 0xFFFFFFFF;
+		memset(&data_buf[0], 0xFF, 8);
 		
 		f_lseek(&files[2], 0x114); //move to position 0x114 in the file "track3.bin"
-		f_read(&files[2], &toc_buf[2], 408, &junk); //get that data
-		memcpy(&data_buf, &toc_buf, 408);
+		
+		//get that data
+		if(f_read(&files[2], &temp, 408, &junk) != FR_OK){ 
+			HAL_UART_Transmit(&huart4, &error_code, 1, HAL_MAX_DELAY);
+			return;
+		}
+		
+		//need to reorder data
+		while(count < 408){
+			
+			data_buf[count + 8] = temp[count + 3];
+			data_buf[count + 9] = temp[count + 2];
+			data_buf[count + 10] = temp[count + 1];
+			data_buf[count + 11] = temp[count];
+			
+			count = count + 4;
+		}
+		
 		HAL_SPI_Transmit(&hspi1, data_buf, 408, HAL_MAX_DELAY); //transmit over SPI
 	}
 	//low density TOC
@@ -432,7 +495,7 @@ void transmit_71(){
 }
 
 //Test unit, sets various control registers on the FPGA
-void test_unit(){
+/*void test_unit(){
 	
 	//this can be done on the FPGA side
 	data_buf[0] = 0x00; //error register
@@ -440,14 +503,15 @@ void test_unit(){
 	data_buf[2] = 0x50; //Status register (ready and "seek done" set)
 	
 	HAL_SPI_Transmit(&hspi1, data_buf, 3, HAL_MAX_DELAY);
-}
+}*/
+
 //Request mode (get various data regarding the CD)
 void request_mode(){
 	//according to ice there are only two things the system will request
 	//put in others later though just in case
 	//System Version, need to return: Rev 5.07
-	//NullDC returns: "SE      Rev 6.43990408"; check o-scope
-	//"SE      " for Drive info; "Rev 6.43" sys. ver; "990408" sys. date
+	//NullDC returns: "SE      Rev 6.43990408";
+	//"SE      " for Drive info; "Rev 6.43" for sys. ver; "990408" for sys. date
 	const char version[8] = "Rev 5.07"; 
 	
 	if(cmd_buf[1] == 18){
@@ -499,7 +563,7 @@ void read_cd(uint8_t cmd){
 	
 	//check expected data type (Dreamcast will only request either CDDA or mode1)
 	//check if cdda, if so then ignore data sel
-	if((cmd_buf[0] & 0x0E) == 0x01){
+	if((cmd_buf[0] & 0x0E) == 0x02){
 		cdda_flag = 1;
 	}
 	//check data sel, check if "other"
@@ -525,7 +589,11 @@ void read_cd(uint8_t cmd){
 	//begin reading data
 	f_lseek(&files[file_index], byte_addr);
 	while(count < transfer_length){
-		f_read(&files[file_index], data_buf1, 2352, &junk);
+		
+		if(f_read(&files[file_index], data_buf1, 2352, &junk) != FR_OK){
+			HAL_UART_Transmit(&huart4, &error_code, 1, HAL_MAX_DELAY);
+			return;
+		}
 		
 		//check if we only send user data or not
 		if(cdda_flag == 0x00){
@@ -557,6 +625,7 @@ void get_scd(){
 		data_buf[3] = 0x64; //100 bytes
 		
 		//get 96 bytes of subcode data
+		memset(&data_buf[4], 0x00, 92);
 	}
 	//subcode q data 14 bytes
 	else{
@@ -597,9 +666,13 @@ void cd_play(){
 	//read and transmit (SPI2)
 	//interrupt vector needed, when buffer is empty read more frames replenish buffer
 }
+
+/* USER CODE END 3 */
+
 /** System Clock Configuration
 */
-void SystemClock_Config(void){
+void SystemClock_Config(void)
+{
 
   RCC_OscInitTypeDef RCC_OscInitStruct;
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
@@ -618,9 +691,9 @@ void SystemClock_Config(void){
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 72;
+  RCC_OscInitStruct.PLL.PLLN = 84;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 3;
+  RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
@@ -633,7 +706,7 @@ void SystemClock_Config(void){
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
@@ -653,7 +726,8 @@ void SystemClock_Config(void){
 }
 
 /* SDIO init function */
-static void MX_SDIO_SD_Init(void){
+static void MX_SDIO_SD_Init(void)
+{
 
   hsd.Instance = SDIO;
   hsd.Init.ClockEdge = SDIO_CLOCK_EDGE_RISING;
@@ -661,12 +735,13 @@ static void MX_SDIO_SD_Init(void){
   hsd.Init.ClockPowerSave = SDIO_CLOCK_POWER_SAVE_DISABLE;
   hsd.Init.BusWide = SDIO_BUS_WIDE_1B;
   hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
-  hsd.Init.ClockDiv = 3;
+  hsd.Init.ClockDiv = 10;
 
 }
 
 /* SPI1 init function */
-static void MX_SPI1_Init(void){
+static void MX_SPI1_Init(void)
+{
 
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
@@ -675,7 +750,7 @@ static void MX_SPI1_Init(void){
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -688,7 +763,8 @@ static void MX_SPI1_Init(void){
 }
 
 /* SPI2 init function */
-static void MX_SPI2_Init(void){
+static void MX_SPI2_Init(void)
+{
 
   hspi2.Instance = SPI2;
   hspi2.Init.Mode = SPI_MODE_MASTER;
@@ -710,7 +786,8 @@ static void MX_SPI2_Init(void){
 }
 
 /* UART4 init function */
-static void MX_UART4_Init(void){
+static void MX_UART4_Init(void)
+{
 
   huart4.Instance = UART4;
   huart4.Init.BaudRate = 115200;

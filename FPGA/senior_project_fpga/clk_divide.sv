@@ -1,17 +1,18 @@
 module clk_divide(
 	input clk,
-	output reg clk_out
+	output clk_out
 );
 
-reg [31:0]count;
+reg [7:0]count;
 
-always_ff@(posedge clk)
+always@(posedge clk)
 begin
-	if(count == 567)
+	if(count == 217)
 	begin
-		count <= 0;
 		clk_out <= ~clk_out;
+		count <= 0;
 	end
 	else count <= count + 1'b1;
+
 end
 endmodule

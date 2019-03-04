@@ -2,7 +2,132 @@
 	"partitions" : [
 		{
 			"name" : "Top",
-			"pins" : []
+			"pins" : [
+				{
+					"name" : "GPIO_0[0]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[1]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[2]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[3]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[4]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[5]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[6]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[7]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[8]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[9]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[10]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[11]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[12]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[13]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[14]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[15]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[16]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[17]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[18]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[20]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[21]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[22]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[24]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[25]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[26]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[27]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_0[28]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_1[8]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_1[25]",
+					"strict" : false
+				},
+				{
+					"name" : "GPIO_1[33]",
+					"strict" : false
+				},
+				{
+					"name" : "CLOCK_50",
+					"strict" : false
+				}
+			]
 		}
 	]
 }

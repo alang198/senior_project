@@ -8,7 +8,7 @@ module senior_project_fpga(
 	CLOCK_50,
 
 	//////////// LED //////////
-	LED,
+	//LED,
 
 	//////////// KEY //////////
 	KEY,
@@ -17,7 +17,7 @@ module senior_project_fpga(
 	SW,
 
 	//////////// SDRAM //////////
-	DRAM_ADDR,
+	/*DRAM_ADDR,
 	DRAM_BA,
 	DRAM_CAS_N,
 	DRAM_CKE,
@@ -26,25 +26,25 @@ module senior_project_fpga(
 	DRAM_DQ,
 	DRAM_DQM,
 	DRAM_RAS_N,
-	DRAM_WE_N,
+	DRAM_WE_N,*/
 
 	//////////// EPCS //////////
-	EPCS_ASDO,
+	/*EPCS_ASDO,
 	EPCS_DATA0,
 	EPCS_DCLK,
-	EPCS_NCSO,
+	EPCS_NCSO,*/
 
 	//////////// Accelerometer and EEPROM //////////
-	G_SENSOR_CS_N,
+	/*G_SENSOR_CS_N,
 	G_SENSOR_INT,
 	I2C_SCLK,
-	I2C_SDAT,
+	I2C_SDAT,*/
 
 	//////////// ADC //////////
-	ADC_CS_N,
+	/*ADC_CS_N,
 	ADC_SADDR,
 	ADC_SCLK,
-	ADC_SDAT,
+	ADC_SDAT,*/
 
 	//////////// 2x13 GPIO Header //////////
 	GPIO_2,
@@ -72,7 +72,7 @@ module senior_project_fpga(
 input 		          		CLOCK_50;
 
 //////////// LED //////////
-output		     [7:0]		LED;
+//output		     [7:0]		LED;
 
 //////////// KEY //////////
 input 		     [1:0]		KEY;
@@ -80,8 +80,8 @@ input 		     [1:0]		KEY;
 //////////// SW //////////
 input 		     [3:0]		SW;
 
-//////////// SDRAM //////////
-output		    [12:0]		DRAM_ADDR;
+//////////// SDRAM ////////// 
+/*output		    [12:0]		DRAM_ADDR;
 output		     [1:0]		DRAM_BA;
 output		          		DRAM_CAS_N;
 output		          		DRAM_CKE;
@@ -90,25 +90,25 @@ output		          		DRAM_CS_N;
 inout 		    [15:0]		DRAM_DQ;
 output		     [1:0]		DRAM_DQM;
 output		          		DRAM_RAS_N;
-output		          		DRAM_WE_N;
+output		          		DRAM_WE_N;*/
 
 //////////// EPCS //////////
-output		          		EPCS_ASDO;
+/*output		          		EPCS_ASDO;
 input 		          		EPCS_DATA0;
 output		          		EPCS_DCLK;
-output		          		EPCS_NCSO;
+output		          		EPCS_NCSO;*/
 
 //////////// Accelerometer and EEPROM //////////
-output		          		G_SENSOR_CS_N;
+/*output		          		G_SENSOR_CS_N;
 input 		          		G_SENSOR_INT;
 output		          		I2C_SCLK;
-inout 		          		I2C_SDAT;
+inout 		          		I2C_SDAT;*/
 
 //////////// ADC //////////
-output		          		ADC_CS_N;
+/*output		          		ADC_CS_N;
 output		          		ADC_SADDR;
 output		          		ADC_SCLK;
-input 		          		ADC_SDAT;
+input 		          		ADC_SDAT;*/
 
 //////////// 2x13 GPIO Header //////////
 inout 		    [12:0]		GPIO_2;
@@ -128,13 +128,13 @@ input 		     [1:0]		GPIO_1_IN;
 //  REG/WIRE declarations
 //=======================================================
 wire reset; //reset input
-wire D[15:0]; //data lines
+wire [15:0]D; //data lines
 wire DMARQ; //dma request
 wire CD_EMPH; //CD empty status output
 wire RD; //read select
 wire DMACK; //dma acknowledge
-wire DA[2:0]; //select stuff for ATA bus
-wire CS[1:0]; //chip select
+wire [2:0]DA; //select stuff for ATA bus
+wire [1:0]CS; //chip select
 wire CD_BCLK; //one of the CD clocks (1.41MHz)
 wire CD_SD; //CD serial data in
 wire DOOR_OPEN; //status for disc lid (1 = open)
@@ -152,50 +152,54 @@ wire CDDA_CLK; //YET another CD clock (33.8688MHz)
 //A side of the bus, lowest to highest
 assign reset = GPIO_0[0];
 
-assign D[7] = GPIO_0[2];
-assign D[8] = GPIO_0[4];
-assign D[5] = GPIO_0[6];
-assign D[10] = GPIO_0[8];
+//assign GPIO_0[2] = D[7];
+//assign GPIO_0[4] = D[8];
+//assign GPIO_0[6] = D[5];
+//assign GPIO_0[8] = D[10];
 
-assign D[3] = GPIO_0[10];
-assign D[12] = GPIO_0[12];
-assign D[1] = GPIO_0[14];
-assign D[14] = GPIO_0[16];
+//assign GPIO_0[10] = D[3];
+//assign GPIO_0[12] = D[12];
+//assign GPIO_0[14] = D[1];
+//assign GPIO_0[16] = D[14];
 
-assign DMARQ = GPIO_0[18];
+assign GPIO_0[18] = DMARQ;
 assign RD = GPIO_0[20];
 assign DMACK = GPIO_0[22];
-assign CD_EMPH = GPIO_0[23];
+assign GPIO_0[23] = CD_EMPH;
 
 assign DA[0] = GPIO_0[26];
 assign CS[0] = GPIO_0[28];
 
-assign CD_BCLK = GPIO_0[30];
-assign CD_SD = GPIO_0[31];
+assign GPIO_0[30] = CD_BCLK;
+assign GPIO_0[31] = CD_SD;
 
 //B side of the bus
-assign DOOR_OPEN = GPIO_0[33];
+assign GPIO_0[33] = DOOR_OPEN;
 
-assign D[6] = GPIO_0[1];
-assign D[9] = GPIO_0[3];
-assign D[4] = GPIO_0[5];
-assign D[11] = GPIO_0[7];
+//assign GPIO_0[1] = D[6];
+//assign GPIO_0[3] = D[9];
+//assign GPIO_0[5] = D[4];
+//assign GPIO_0[7] = D[11];
 
-assign D[2] = GPIO_0[9];
-assign D[13] = GPIO_0[11];
-assign D[0] = GPIO_0[13];
-assign D[15] = GPIO_0[15];
+//assign GPIO_0[9] = D[2];
+//assign GPIO_0[11] = D[13];
+//assign GPIO_0[13] = D[0];
+//assign GPIO_0[15] = D[15];
 
 assign WR = GPIO_0[17];
-assign IORDY = GPIO_0[19];
-assign INTRQ = GPIO_0[21];
+assign GPIO_0[19] = IORDY;
+assign GPIO_0[21] = INTRQ;
 assign DA[1] = GPIO_0[24];
 
 assign DA[2] = GPIO_0[25];
 assign CS[1] = GPIO_0[27];
 
-assign CD_LRCLK = GPIO_0[29];
-assign CDDA_CLK = GPIO_0[32];
+assign GPIO_0[29] = CD_LRCLK;
+assign GPIO_0[32] = CDDA_CLK;
+
+assign CD_SD = 0;
+assign CD_EMPH = 0;
+assign DOOR_OPEN = 0;
 
 //this one is too fast for a clock divider; needs PLL
 cdda_clk sonic_d_hedgehog(.inclk0(CLOCK_50), .c0(CDDA_CLK));
@@ -203,5 +207,56 @@ cd_bclk sonic_b_hedgehog(.inclk0(CLOCK_50), .c0(CD_BCLK));
 cd_lrclk sonic_e_hedgehog(.inclk0(CLOCK_50), .c0(CD_LRCLK));
 //using a PLL for all of them gets more accurate results in the end
 
+//System Wire Declarations//
+wire uart_start; //ide_processor -> uart_transmit
+wire [11:0][7:0]cmd_buf; //ide_processor -> uart_transmit
+wire [15:0]spi_bytes_in; //spi_reciever -> ide_processor
+wire [14:0]mem_address; //memory_buffer -> ide_processor
+wire mem_buf_read; //ide_processor -> memory_buffer
+wire spi_reset_count; //ide_processor -> spi_reciever
+
+wire uart_clk; //clk_divide -> uart_transmit
+
+wire [15:0]spi_to_buf; //spi_recieve -> memory_buffer
+wire [7:0]spi_bit_count; //spi_recieve -> memory_buffer
+
+wire [15:0]buffer_word_out;
+wire write_pulse;
+
+wire [14:0]spi_address;
+wire [14:0]ide_address;
+
+wire uart_start_synced;
+//************************//
+
+ide_processor anime_girls_in_glasses(.clk(CLOCK_50), .cs(CS), .da(DA), .rd(RD), .wr(WR), .reset(reset), 
+.data_pins({GPIO_0[15], GPIO_0[16], GPIO_0[11], GPIO_0[12], GPIO_0[7], GPIO_0[8], GPIO_0[3], GPIO_0[4], 
+GPIO_0[2], GPIO_0[1], GPIO_0[6], GPIO_0[5], GPIO_0[10], GPIO_0[9], GPIO_0[14], GPIO_0[13]}), 
+.intrq(INTRQ), .dmack(DMACK), .dmarq(DMARQ), .iordy(IORDY), .uart_start(uart_start),
+.cmd_buf(cmd_buf), .bytes_in(spi_bytes_in), .word_in(buffer_word_out), .buffer_read(mem_buf_read),
+.reset_bytes_transmitted(spi_reset_count), .read_addr(ide_address));
+
+clk_divide za_warudo(.clk(CLOCK_50), .clk_out(uart_clk));
+
+uart_transmit u_art_transmitting(.clk(uart_clk), .start(uart_start_synced), .cmd_buf(cmd_buf), 
+.data_out(GPIO_1[8]));
+
+spi_recieve not_sega_packet_interface(.clk(GPIO_1[33]), .data_in(GPIO_1[25]), .bytes_recieved(spi_bytes_in), 
+.byte_out(spi_to_buf), .count(spi_bit_count), .address(spi_address), .reset(spi_reset_count), .write_pulse(write_pulse));
+
+/*memory_buffer cant_remember(.clk(CLOCK_50), .read_pulse(mem_buf_read), .spi_count(spi_bit_count),
+.spi_byte_in(spi_to_buf), .address(mem_address), .write_pulse(write_pulse));*/
+
+sync n_sync(.clk_fpga(uart_clk), .clk_ps2(CLOCK_50), .flag_in(uart_start), .flag_out(uart_start_synced)); //clock domain crossing
+
+assign mem_address = (mem_buf_read) ? ide_address : spi_address;
+
+mem_buf_ram actual_buffer(
+	.address(mem_address),
+	.clock(CLOCK_50),
+	.data(spi_to_buf),
+	.wren(write_pulse), //1 = write
+	.q(buffer_word_out)
+	);
 
 endmodule

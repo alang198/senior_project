@@ -8,7 +8,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -172,7 +172,7 @@
 /
 /  When _LFN_UNICODE is 0, this option has no effect. */
 
-#define _FS_RPATH       1 /* 0 to 2 */
+#define _FS_RPATH       0 /* 0 to 2 */
 /* This option configures relative path feature.
 /
 /   0: Disable relative path feature and remove related functions.
@@ -247,7 +247,7 @@
 /  _NORTC_MDAY and _NORTC_YEAR have no effect. 
 /  These options have no effect at read-only configuration (_FS_READONLY == 1). */
 
-#define _FS_LOCK    2     /* 0:Disable or >=1:Enable */
+#define _FS_LOCK    0     /* 0:Disable or >=1:Enable */
 /* The _FS_LOCK option switches file lock feature to control duplicated file open
 /  and illegal operation to open objects. This option must be 0 when _FS_READONLY
 /  is 1.

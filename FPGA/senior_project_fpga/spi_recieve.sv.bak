@@ -1,0 +1,13 @@
+module spi_recieve(
+	input logic clk,
+	input logic data_in,
+	output logic [15:0]bytes_recieved,
+	output logic [7:0]byte_out,
+	output logic [15:0]buf_index
+);
+
+//data seems to be clocked in on posedge
+always_ff@(posedge clk)
+begin
+end
+endmodule
