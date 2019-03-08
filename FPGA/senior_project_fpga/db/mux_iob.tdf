@@ -1,0 +1,124 @@
+--lpm_mux CBX_DECLARE_ALL_CONNECTED_PORTS="OFF" DEVICE_FAMILY="Cyclone IV E" LPM_SIZE=2 LPM_WIDTH=43 LPM_WIDTHS=1 data result sel
+--VERSION_BEGIN 16.1 cbx_lpm_mux 2016:10:24:15:04:16:SJ cbx_mgl 2016:10:24:15:05:03:SJ  VERSION_END
+
+
+-- Copyright (C) 2016  Intel Corporation. All rights reserved.
+--  Your use of Intel Corporation's design tools, logic functions 
+--  and other software and tools, and its AMPP partner logic 
+--  functions, and any output files from any of the foregoing 
+--  (including device programming or simulation files), and any 
+--  associated documentation or information are expressly subject 
+--  to the terms and conditions of the Intel Program License 
+--  Subscription Agreement, the Intel Quartus Prime License Agreement,
+--  the Intel MegaCore Function License Agreement, or other 
+--  applicable license agreement, including, without limitation, 
+--  that your use is for the sole purpose of programming logic 
+--  devices manufactured by Intel and sold by Intel or its 
+--  authorized distributors.  Please refer to the applicable 
+--  agreement for further details.
+
+
+
+--synthesis_resources = lut 43 
+SUBDESIGN mux_iob
+( 
+	data[85..0]	:	input;
+	result[42..0]	:	output;
+	sel[0..0]	:	input;
+) 
+VARIABLE 
+	result_node[42..0]	: WIRE;
+	sel_node[0..0]	: WIRE;
+	w_data1004w[1..0]	: WIRE;
+	w_data1016w[1..0]	: WIRE;
+	w_data1028w[1..0]	: WIRE;
+	w_data1040w[1..0]	: WIRE;
+	w_data1052w[1..0]	: WIRE;
+	w_data1064w[1..0]	: WIRE;
+	w_data1076w[1..0]	: WIRE;
+	w_data1088w[1..0]	: WIRE;
+	w_data1100w[1..0]	: WIRE;
+	w_data1112w[1..0]	: WIRE;
+	w_data1124w[1..0]	: WIRE;
+	w_data1136w[1..0]	: WIRE;
+	w_data1148w[1..0]	: WIRE;
+	w_data1160w[1..0]	: WIRE;
+	w_data1172w[1..0]	: WIRE;
+	w_data1184w[1..0]	: WIRE;
+	w_data1196w[1..0]	: WIRE;
+	w_data1208w[1..0]	: WIRE;
+	w_data1220w[1..0]	: WIRE;
+	w_data1232w[1..0]	: WIRE;
+	w_data1244w[1..0]	: WIRE;
+	w_data1256w[1..0]	: WIRE;
+	w_data750w[1..0]	: WIRE;
+	w_data764w[1..0]	: WIRE;
+	w_data776w[1..0]	: WIRE;
+	w_data788w[1..0]	: WIRE;
+	w_data800w[1..0]	: WIRE;
+	w_data812w[1..0]	: WIRE;
+	w_data824w[1..0]	: WIRE;
+	w_data836w[1..0]	: WIRE;
+	w_data848w[1..0]	: WIRE;
+	w_data860w[1..0]	: WIRE;
+	w_data872w[1..0]	: WIRE;
+	w_data884w[1..0]	: WIRE;
+	w_data896w[1..0]	: WIRE;
+	w_data908w[1..0]	: WIRE;
+	w_data920w[1..0]	: WIRE;
+	w_data932w[1..0]	: WIRE;
+	w_data944w[1..0]	: WIRE;
+	w_data956w[1..0]	: WIRE;
+	w_data968w[1..0]	: WIRE;
+	w_data980w[1..0]	: WIRE;
+	w_data992w[1..0]	: WIRE;
+
+BEGIN 
+	result[] = result_node[];
+	result_node[] = ( ((sel_node[] & w_data1256w[1..1]) # ((! sel_node[]) & w_data1256w[0..0])), ((sel_node[] & w_data1244w[1..1]) # ((! sel_node[]) & w_data1244w[0..0])), ((sel_node[] & w_data1232w[1..1]) # ((! sel_node[]) & w_data1232w[0..0])), ((sel_node[] & w_data1220w[1..1]) # ((! sel_node[]) & w_data1220w[0..0])), ((sel_node[] & w_data1208w[1..1]) # ((! sel_node[]) & w_data1208w[0..0])), ((sel_node[] & w_data1196w[1..1]) # ((! sel_node[]) & w_data1196w[0..0])), ((sel_node[] & w_data1184w[1..1]) # ((! sel_node[]) & w_data1184w[0..0])), ((sel_node[] & w_data1172w[1..1]) # ((! sel_node[]) & w_data1172w[0..0])), ((sel_node[] & w_data1160w[1..1]) # ((! sel_node[]) & w_data1160w[0..0])), ((sel_node[] & w_data1148w[1..1]) # ((! sel_node[]) & w_data1148w[0..0])), ((sel_node[] & w_data1136w[1..1]) # ((! sel_node[]) & w_data1136w[0..0])), ((sel_node[] & w_data1124w[1..1]) # ((! sel_node[]) & w_data1124w[0..0])), ((sel_node[] & w_data1112w[1..1]) # ((! sel_node[]) & w_data1112w[0..0])), ((sel_node[] & w_data1100w[1..1]) # ((! sel_node[]) & w_data1100w[0..0])), ((sel_node[] & w_data1088w[1..1]) # ((! sel_node[]) & w_data1088w[0..0])), ((sel_node[] & w_data1076w[1..1]) # ((! sel_node[]) & w_data1076w[0..0])), ((sel_node[] & w_data1064w[1..1]) # ((! sel_node[]) & w_data1064w[0..0])), ((sel_node[] & w_data1052w[1..1]) # ((! sel_node[]) & w_data1052w[0..0])), ((sel_node[] & w_data1040w[1..1]) # ((! sel_node[]) & w_data1040w[0..0])), ((sel_node[] & w_data1028w[1..1]) # ((! sel_node[]) & w_data1028w[0..0])), ((sel_node[] & w_data1016w[1..1]) # ((! sel_node[]) & w_data1016w[0..0])), ((sel_node[] & w_data1004w[1..1]) # ((! sel_node[]) & w_data1004w[0..0])), ((sel_node[] & w_data992w[1..1]) # ((! sel_node[]) & w_data992w[0..0])), ((sel_node[] & w_data980w[1..1]) # ((! sel_node[]) & w_data980w[0..0])), ((sel_node[] & w_data968w[1..1]) # ((! sel_node[]) & w_data968w[0..0])), ((sel_node[] & w_data956w[1..1]) # ((! sel_node[]) & w_data956w[0..0])), ((sel_node[] & w_data944w[1..1]) # ((! sel_node[]) & w_data944w[0..0])), ((sel_node[] & w_data932w[1..1]) # ((! sel_node[]) & w_data932w[0..0])), ((sel_node[] & w_data920w[1..1]) # ((! sel_node[]) & w_data920w[0..0])), ((sel_node[] & w_data908w[1..1]) # ((! sel_node[]) & w_data908w[0..0])), ((sel_node[] & w_data896w[1..1]) # ((! sel_node[]) & w_data896w[0..0])), ((sel_node[] & w_data884w[1..1]) # ((! sel_node[]) & w_data884w[0..0])), ((sel_node[] & w_data872w[1..1]) # ((! sel_node[]) & w_data872w[0..0])), ((sel_node[] & w_data860w[1..1]) # ((! sel_node[]) & w_data860w[0..0])), ((sel_node[] & w_data848w[1..1]) # ((! sel_node[]) & w_data848w[0..0])), ((sel_node[] & w_data836w[1..1]) # ((! sel_node[]) & w_data836w[0..0])), ((sel_node[] & w_data824w[1..1]) # ((! sel_node[]) & w_data824w[0..0])), ((sel_node[] & w_data812w[1..1]) # ((! sel_node[]) & w_data812w[0..0])), ((sel_node[] & w_data800w[1..1]) # ((! sel_node[]) & w_data800w[0..0])), ((sel_node[] & w_data788w[1..1]) # ((! sel_node[]) & w_data788w[0..0])), ((sel_node[] & w_data776w[1..1]) # ((! sel_node[]) & w_data776w[0..0])), ((sel_node[] & w_data764w[1..1]) # ((! sel_node[]) & w_data764w[0..0])), ((sel_node[] & w_data750w[1..1]) # ((! sel_node[]) & w_data750w[0..0])));
+	sel_node[] = ( sel[0..0]);
+	w_data1004w[] = ( data[64..64], data[21..21]);
+	w_data1016w[] = ( data[65..65], data[22..22]);
+	w_data1028w[] = ( data[66..66], data[23..23]);
+	w_data1040w[] = ( data[67..67], data[24..24]);
+	w_data1052w[] = ( data[68..68], data[25..25]);
+	w_data1064w[] = ( data[69..69], data[26..26]);
+	w_data1076w[] = ( data[70..70], data[27..27]);
+	w_data1088w[] = ( data[71..71], data[28..28]);
+	w_data1100w[] = ( data[72..72], data[29..29]);
+	w_data1112w[] = ( data[73..73], data[30..30]);
+	w_data1124w[] = ( data[74..74], data[31..31]);
+	w_data1136w[] = ( data[75..75], data[32..32]);
+	w_data1148w[] = ( data[76..76], data[33..33]);
+	w_data1160w[] = ( data[77..77], data[34..34]);
+	w_data1172w[] = ( data[78..78], data[35..35]);
+	w_data1184w[] = ( data[79..79], data[36..36]);
+	w_data1196w[] = ( data[80..80], data[37..37]);
+	w_data1208w[] = ( data[81..81], data[38..38]);
+	w_data1220w[] = ( data[82..82], data[39..39]);
+	w_data1232w[] = ( data[83..83], data[40..40]);
+	w_data1244w[] = ( data[84..84], data[41..41]);
+	w_data1256w[] = ( data[85..85], data[42..42]);
+	w_data750w[] = ( data[43..43], data[0..0]);
+	w_data764w[] = ( data[44..44], data[1..1]);
+	w_data776w[] = ( data[45..45], data[2..2]);
+	w_data788w[] = ( data[46..46], data[3..3]);
+	w_data800w[] = ( data[47..47], data[4..4]);
+	w_data812w[] = ( data[48..48], data[5..5]);
+	w_data824w[] = ( data[49..49], data[6..6]);
+	w_data836w[] = ( data[50..50], data[7..7]);
+	w_data848w[] = ( data[51..51], data[8..8]);
+	w_data860w[] = ( data[52..52], data[9..9]);
+	w_data872w[] = ( data[53..53], data[10..10]);
+	w_data884w[] = ( data[54..54], data[11..11]);
+	w_data896w[] = ( data[55..55], data[12..12]);
+	w_data908w[] = ( data[56..56], data[13..13]);
+	w_data920w[] = ( data[57..57], data[14..14]);
+	w_data932w[] = ( data[58..58], data[15..15]);
+	w_data944w[] = ( data[59..59], data[16..16]);
+	w_data956w[] = ( data[60..60], data[17..17]);
+	w_data968w[] = ( data[61..61], data[18..18]);
+	w_data980w[] = ( data[62..62], data[19..19]);
+	w_data992w[] = ( data[63..63], data[20..20]);
+END;
+--VALID FILE

@@ -119,8 +119,7 @@ uint8_t error_code = 0xFF;
 FIL gdi_file;
 /* USER CODE END 0 */
 
-int main(void)
-{
+int main(void){
 
   /* USER CODE BEGIN 1 */
 	//fatfs related variables
@@ -157,13 +156,17 @@ int main(void)
   MX_GPIO_Init();
   MX_SDIO_SD_Init();
   MX_FATFS_Init();
-  MX_SPI2_Init();
+  //MX_SPI2_Init();
   MX_SPI1_Init();
   MX_UART4_Init();
 
   /* USER CODE BEGIN 2 */
+  //HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET); //turn on status LED 1
+  
 	//mount successful
 	if(f_mount(&sd_card, SD_Path, 1) == FR_OK){
+		
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET); //turn on status LED 2
 		
 		//scan file system
 		while(1){
@@ -201,7 +204,7 @@ int main(void)
 				//display "invalid gdi"
 				//transmit error code to FPGA
 				HAL_UART_Transmit(&huart4, &error_code, 1, HAL_MAX_DELAY);
-				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET); //turn on error LED
+				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET); //turn on error LED
 				return 1;
 			} 
 			
@@ -299,6 +302,16 @@ uint8_t open_gdi(){
 
 //This function handles the command recieved from the FPGA
 void process_cmd(uint8_t cmd){
+	
+	//FIL cmd_file;
+	//char cmd_iden[8];
+	
+	//write to SD card first command recieved
+	//f_open(&cmd_file, "test.txt", FA_WRITE | FA_CREATE_ALWAYS);
+	//sprintf(cmd_iden, "%x", cmd);
+	//f_write(&cmd_file, cmd_buf, sizeof(cmd_buf), &junk);
+	
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
 	
 	switch(cmd){
 		//TEST_UNIT (note: actual TEST_UNIT is 0x00, 0x70 is a security prep)

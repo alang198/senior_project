@@ -11,7 +11,7 @@ module memory_buffer(
 
 );
 
-//(* ramstyle = "M9K" *) logic [65536:0][7:0]mem_buf; //circular buffer (64KB)
+(* ramstyle = "M9K" *) logic [32768:0][15:0]mem_buf;
 logic [31:0]write_index;
 logic [31:0]read_index;
 

@@ -1,5 +1,6 @@
 module uart_transmit(
 	input clk,
+	input clk_50,
 	input start,
 	input [11:0][7:0]cmd_buf, //12 bytes (6 words)
 	
@@ -11,15 +12,22 @@ logic [7:0]data_shift;
 logic [3:0]counter;
 logic [3:0]bytes_out;
 logic t_byte_flag; //twelve byte flag
+logic start_flag;
 
 parameter idle = 0, shift = 1, stop1 = 2;
+
+always@(posedge clk_50)
+begin
+	if(start == 1'b1) start_flag <= 1'b1;
+	else if(t_byte_flag == 1'b1) start_flag <= 1'b0;
+end
 
 always@(posedge clk)
 begin
 	case(state)
 		idle:
 		begin
-			if((start == 1) || (t_byte_flag == 1)) 
+			if((start_flag == 1) || (t_byte_flag == 1)) 
 			begin
 				t_byte_flag <= 1;
 				

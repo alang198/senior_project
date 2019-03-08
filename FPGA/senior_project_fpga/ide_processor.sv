@@ -31,6 +31,8 @@ module ide_processor(
 //data becomes valid on falling edge, is latched on rising (RD&WR)
 //two modes (pio (8 or 16 bit) & dma (always 16 bit))
 
+assign selected = drive_sel[4];
+
 //logic [15:0]data_in; //let's work with the in/out as little as possible
 logic [15:0]data_out = 16'bz;
 
@@ -40,8 +42,8 @@ assign dout_en = ~read_cur & ((~cs[0])|((~cs[1])&(da[2:1]==2'b11))|dma_en) & ~dr
 assign data_pins = ((dout_en == 1'b1)) ? data_out : 16'bz; //tristate buffer
 //assign data_in = data_pins;
 
-logic int_rq; //logic controller for int_rq
-assign intrq = ((dev_control[1] == 1'b1) && (drive_sel[4] == 1'b0)) ? int_rq : 1'bz;
+reg int_rq = 1'b0; //logic controller for int_rq
+assign intrq = ((drive_sel[4] == 1'b0)) ? int_rq : 1'bz;
 assign iordy = 1'bz; //always high impedance
 
 logic dma_en; 
@@ -77,14 +79,16 @@ reg [7:0]dev_control; //this one appears to be write only
 reg wflag;
 reg rflag;
 
-reg [15:0]state;
+reg [31:0]debug_count;
+
+reg [31:0]state;
 reg cmd_done;
 
 //state machine parameters
 parameter ide_wait = 0, process_command = 1, recieve_spi = 2, transmit_spi = 4, dma_transfer = 8,
 dma_transfer_last = 16, recieve_data = 32, do_test_unit = 64, do_set_mode = 128, pio_transfer_setup = 256,
-send_to_dc = 512, pio_transfer = 1024, pio_transfer_last = 2048, set_mode_recieve = 4096,
-error = 32768;
+send_to_dc = 512, pio_transfer = 1024, pio_transfer_last = 2048, set_mode_recieve = 4096, do_req_mode = 8192,
+transmit_req_mode_rev = 16384, transmit_zeros = 32768, do_cmd71 = 65536, do_cmd71_transmit = 131072;
 
 //reg [15:0]buffer_count;
 reg [15:0]count_to;
@@ -111,13 +115,24 @@ begin
 	read_cur <= rd;
 end
 
+logic write_pulse;
+logic write_old;
+logic write_cur;
+
+assign write_pulse = ~write_old & write_cur;
+always_ff@(posedge clk)
+begin
+	write_old <= write_cur;
+	write_cur <= wr;
+end
+
 
 logic [15:0]buffer_data_out;
 
 always_ff@(posedge clk)
 begin
 
-	if(drive_sel[4] == 1'b1) state <= error; //this should never happen
+	//if(drive_sel[4] == 1'b1) state <= error; //this should never happen
 
 	//sending data to Dreamcast
 	//look up table on page 12 of SPI format datasheet
@@ -144,9 +159,10 @@ begin
 				5'b01111: 
 				begin
 					//status[7] <= 1'b0;
-					int_rq <= 1'b0; //reading status clears this; alt status does not
+					if(drive_sel[4] == 0) int_rq <= 1'b0; //reading status clears this; alt status does not
 					data_out <= status;
 				end
+				default: data_out <= 0;
 				//there will never be a case where both CS lines are asserted.
 			endcase
 		end
@@ -155,10 +171,8 @@ begin
 	
 	//latching data from Dreamcast
 	//check if we're on the falling edge
-	if(wr == 1'b0) wflag <= 1'b1;
-	else if((wr == 1'b1) && (wflag == 1'b1)) //rising edge confirmed
+	if(write_pulse) //rising edge confirmed
 	begin
-		wflag <= 1'b0;
 		
 		//look up table page 12 SPI datasheet
 		case({cs[0], cs[1], da})
@@ -188,10 +202,12 @@ begin
 		error_reg <= 16'h0000;
 		features <= 16'h0000;
 		sector_count <= 16'h0000;
-		sector_num <= 16'h0080; //find out what values can go here; assume GD. REQ_STAT gets it's data from here
+		sector_num <= 16'h0082; //find out what values can go here; assume GD. REQ_STAT gets it's data from here
 		drive_sel <= 16'h0000;
 		int_reason <= 16'h0003;
 		status <= 16'h0050;
+		data_out <= 16'hFFFF;
+		state <= ide_wait;
 	end
 
 	case(state)
@@ -208,10 +224,17 @@ begin
 			begin
 				//SPI command
 				int_reason[1:0] <= 2'b01; //clear IO and set CoD
+				
 				state <= recieve_spi;
-				count_to <= 6; //spi command is 6 words
+				
+				count_to <= 5; //spi command is 6 words
 				status <= 8'h58; //set DRQ, seek processing & ready
+				write_buffer_count <= 0;
+				cmd_done <= 1'b0;
+				addr_count <= 0;
+				
 			end
+			
 			8'hEF:
 			begin
 				//set features (just need to set error and status then raise interrupt)
@@ -224,7 +247,7 @@ begin
 			begin
 				error_reg <= 8'h04;
 				status <= 8'h51;
-				int_rq <= 1'b1;
+				//int_rq <= 1'b1;
 				
 				state <= ide_wait;
 			end
@@ -250,11 +273,15 @@ begin
 	
 	transmit_spi:
 	begin
-		uart_start <= 1'b1;
+		//uart_start <= 1'b1;
 		reset_bytes_transmitted <= 0;
 		
 		//check if we need to manually set byte_count (e.g. cmd 71) or go to unique state
-		if(spi_cmd == 8'h71) byte_count <= 6;
+		if(spi_cmd == 8'h71) 
+		begin
+			byte_count <= 6;
+			state <= do_cmd71;
+		end
 		else if(spi_cmd == 8'h12) 
 		begin
 			state <= do_set_mode; //set mode
@@ -263,12 +290,50 @@ begin
 		else if(spi_cmd == 8'h14) byte_count <= 408; //get_toc
 		else if(spi_cmd == 8'h15) byte_count <= 6; //req_ses
 		else if((spi_cmd == 8'h70) || (spi_cmd == 8'h00)) state <= do_test_unit; //test unit
-		else if((spi_cmd == 8'h11) && (cmd_buf[2] == 8'd18)) byte_count <= 8; //req_mode
+		else if(spi_cmd == 8'h11) state <= do_req_mode; //req_mode (need to check transfer length in next state)
 		else if(spi_cmd == 8'h11) byte_count <= 10; //req_mode
 		else if(spi_cmd == 8'h13) byte_count <= 10; //req_error
 		else if((spi_cmd == 8'h40) && (cmd_buf[1] != 8'h00)) byte_count <= 14; //cd_scd
 		
-		if((spi_cmd != 8'h12) && (spi_cmd != 8'h70) && (spi_cmd != 8'h00)) state <= recieve_data;
+		if((spi_cmd != 8'h12) && (spi_cmd != 8'h70) && (spi_cmd != 8'h00) && (spi_cmd != 8'h11) && (spi_cmd != 8'h71)) 
+		begin
+			
+			if(debug_count == 50000000)
+			begin
+				state <= recieve_data;
+				uart_start <= 1'b1;
+			end
+			else debug_count <= debug_count + 1'b1;
+		end
+	end
+	
+	do_cmd71:
+	begin
+		int_reason <= 8'h02; //I/O set, CoD clear
+		status <= 8'h58;
+		
+		int_rq <= 1'b1;
+		
+		bytes_transfered <= 0;
+		
+		buffer_data_out <= 16'h06BA; //cmd71 pt 1
+		
+		state <= do_cmd71_transmit;
+	end
+	
+	do_cmd71_transmit:
+	begin
+		if(bytes_transfered > 4) state <= pio_transfer_last;
+		
+		else if((read_pulse == 1'b1) && ({cs[0], cs[1], da} == 5'b01000) && ~drive_sel[4])
+		begin
+			if(bytes_transfered == 0) buffer_data_out <= 16'hCA0D;
+			else if(bytes_transfered == 2) buffer_data_out <= 16'h1F6A;
+			
+			bytes_transfered <= bytes_transfered + 2;
+			
+			state <= do_cmd71_transmit;
+		end
 	end
 	
 	recieve_data:
@@ -296,7 +361,8 @@ begin
 		if(buffer_read == 1'b1)
 		begin
 			buffer_read <= 0;
-			buffer_data_out <= word_in;
+			buffer_data_out[15:8] <= word_in[7:0];
+			buffer_data_out[7:0] <= word_in[15:8];
 		end
 		
 		//update value from buffer
@@ -347,18 +413,23 @@ begin
 		status <= 8'h58;
 		
 		int_rq <= 1'b1;
+		read_addr <= 0;
 		
 		buffer_read <= 1'b1;
 		bytes_transfered <= 0;
+		reset_bytes_transmitted <= 1;
 		state <= pio_transfer;
 	end
 	
 	pio_transfer:
 	begin
+		reset_bytes_transmitted <= 0;
+	
 		if(buffer_read == 1'b1)
 		begin
-			buffer_read <= 1'b0;
-			buffer_data_out <= word_in;
+			//buffer_read <= 1'b0;
+			buffer_data_out[15:8] <= word_in[7:0];
+			buffer_data_out[7:0] <= word_in[15:8];
 		end
 	
 		if((bytes_transfered >= byte_count))
@@ -412,6 +483,61 @@ begin
 		end
 	end
 	
+	do_req_mode:
+	begin
+		int_reason <= 8'h02; //I/O set, CoD clear
+		status <= 8'h58;
+		
+		int_rq <= 1'b1;
+		
+		bytes_transfered <= 0;
+		
+		//send "REV 5.07"
+		if(cmd_buf[2] == 8'h12)
+		begin
+			byte_count <= 8;
+			state <= transmit_req_mode_rev;
+			
+			buffer_data_out <= 16'h6552; //"Re"
+		end
+		//send zeros
+		else
+		begin
+			byte_count <= 10;
+			state <= transmit_zeros;
+		end
+	end
+	
+	transmit_req_mode_rev:
+	begin
+		if(bytes_transfered > 6) state <= pio_transfer_last;
+		
+		else if((read_pulse == 1'b1) && ({cs[0], cs[1], da} == 5'b01000) && ~drive_sel[4])
+		begin
+			if(bytes_transfered == 0) buffer_data_out <= 16'h2076; //"v "
+			else if(bytes_transfered == 2) buffer_data_out <= 16'h2E35; //"5."
+			else if(bytes_transfered == 4) buffer_data_out <= 16'h3730; //"07"
+			
+			bytes_transfered <= bytes_transfered + 2;
+			
+			state <= transmit_req_mode_rev;
+		end
+	end
+	
+	transmit_zeros:
+	begin
+		buffer_data_out <= 0;
+	
+		if(bytes_transfered >= byte_count) state <= pio_transfer_last;
+		
+		else if((read_pulse == 1'b1) && ({cs[0], cs[1], da} == 5'b01000) && ~drive_sel[4])
+		begin
+			bytes_transfered <= bytes_transfered + 2;
+			state <= transmit_zeros;
+		end
+	end
+	
+	
 	default:
 	begin
 		status <= status;
@@ -421,23 +547,26 @@ begin
 
 
 	//recieve SPI
-	if(wr == 1'b0) wr_flag <= 1'b1;//falling edge	
-	else if(({cs[0], cs[1], da} == 5'b01000) && (wr == 1'b1) && (features[0] == 1'b0) && (wr_flag == 1'b1))
+	if(({cs[0], cs[1], da} == 5'b01000) && write_pulse && (drive_sel[4] == 0))
 	begin
-		wr_flag <= 1'b0;
-		cmd_buf[write_buffer_count] <= data_pins[7:0];
-		cmd_buf[write_buffer_count + 1] <= data_pins[15:0];
+	
+		write_buffer_count <= write_buffer_count + 1'b1;
 		
-		if(write_buffer_count >= count_to)
+		addr_count <= addr_count + 2;
+	
+		cmd_buf[addr_count] <= data_pins[7:0];
+		cmd_buf[addr_count + 1] <= data_pins[15:8];
+		
+		if((write_buffer_count == count_to))
 		begin
 			write_buffer_count <= 0;
 			cmd_done <= 1;
 		end
-		else write_buffer_count <= write_buffer_count + 1;
 	end
 	
 end
 
+logic [7:0]addr_count;
 logic [7:0]write_buffer_count;
 logic wr_flag;
 
