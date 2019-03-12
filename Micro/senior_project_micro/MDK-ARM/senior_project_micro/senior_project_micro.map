@@ -661,18 +661,20 @@ Section Cross References
     main.o(i.open_gdi) refers to main.o(.data) for .data
     main.o(i.open_gdi) refers to main.o(.bss) for .bss
     main.o(i.process_cmd) refers to stm32f4xx_hal_gpio.o(i.HAL_GPIO_WritePin) for HAL_GPIO_WritePin
-    main.o(i.process_cmd) refers to main.o(i.read_cd) for read_cd
     main.o(i.process_cmd) refers to main.o(i.transmit_71) for transmit_71
     main.o(i.process_cmd) refers to main.o(i.request_mode) for request_mode
     main.o(i.process_cmd) refers to main.o(i.req_error) for req_error
     main.o(i.process_cmd) refers to main.o(i.get_toc) for get_toc
     main.o(i.process_cmd) refers to main.o(i.req_ses) for req_ses
+    main.o(i.process_cmd) refers to main.o(i.read_cd) for read_cd
     main.o(i.process_cmd) refers to main.o(i.get_scd) for get_scd
     main.o(i.read_cd) refers to ff.o(i.f_lseek) for f_lseek
     main.o(i.read_cd) refers to ff.o(i.f_read) for f_read
-    main.o(i.read_cd) refers to stm32f4xx_hal_uart.o(i.HAL_UART_Transmit) for HAL_UART_Transmit
     main.o(i.read_cd) refers to stm32f4xx_hal_spi.o(i.HAL_SPI_Transmit) for HAL_SPI_Transmit
     main.o(i.read_cd) refers to memcpya.o(.text) for __aeabi_memcpy
+    main.o(i.read_cd) refers to stm32f4xx_hal_uart.o(i.HAL_UART_Receive) for HAL_UART_Receive
+    main.o(i.read_cd) refers to stm32f4xx_hal_gpio.o(i.HAL_GPIO_WritePin) for HAL_GPIO_WritePin
+    main.o(i.read_cd) refers to stm32f4xx_hal_uart.o(i.HAL_UART_Transmit) for HAL_UART_Transmit
     main.o(i.read_cd) refers to main.o(.bss) for .bss
     main.o(i.read_cd) refers to main.o(.data) for .data
     main.o(i.req_error) refers to stm32f4xx_hal_spi.o(i.HAL_SPI_Transmit) for HAL_SPI_Transmit
@@ -1753,30 +1755,30 @@ Image Symbol Table
     move_window                              0x08004211   Thumb Code    56  ff.o(i.move_window)
     i.open_gdi                               0x08004248   Section        0  main.o(i.open_gdi)
     i.process_cmd                            0x08004344   Section        0  main.o(i.process_cmd)
-    i.put_fat                                0x080043c0   Section        0  ff.o(i.put_fat)
-    i.read_cd                                0x080044e0   Section        0  main.o(i.read_cd)
-    i.remove_chain                           0x080045fc   Section        0  ff.o(i.remove_chain)
-    remove_chain                             0x080045fd   Thumb Code   102  ff.o(i.remove_chain)
-    i.req_error                              0x08004664   Section        0  main.o(i.req_error)
-    i.req_ses                                0x0800468c   Section        0  main.o(i.req_ses)
-    i.request_mode                           0x080046dc   Section        0  main.o(i.request_mode)
-    i.st_clust                               0x08004724   Section        0  ff.o(i.st_clust)
-    st_clust                                 0x08004725   Thumb Code    16  ff.o(i.st_clust)
-    i.sync_window                            0x08004734   Section        0  ff.o(i.sync_window)
-    sync_window                              0x08004735   Thumb Code    82  ff.o(i.sync_window)
-    i.transmit_71                            0x08004788   Section        0  main.o(i.transmit_71)
-    i.validate                               0x080047b8   Section        0  ff.o(i.validate)
-    validate                                 0x080047b9   Thumb Code    42  ff.o(i.validate)
-    .constdata                               0x080047e2   Section       16  system_stm32f4xx.o(.constdata)
-    .constdata                               0x080047f2   Section        8  system_stm32f4xx.o(.constdata)
-    .constdata                               0x080047fa   Section      172  ff.o(.constdata)
-    ExCvt                                    0x080047fa   Data         128  ff.o(.constdata)
-    vst                                      0x0800487a   Data          22  ff.o(.constdata)
-    cst                                      0x08004890   Data          22  ff.o(.constdata)
-    .constdata                               0x080048a8   Section       20  sd_diskio.o(.constdata)
-    .constdata                               0x080048bc   Section      129  ctype_o.o(.constdata)
-    .constdata                               0x08004940   Section        4  ctype_o.o(.constdata)
-    table                                    0x08004940   Data           4  ctype_o.o(.constdata)
+    i.put_fat                                0x080043bc   Section        0  ff.o(i.put_fat)
+    i.read_cd                                0x080044dc   Section        0  main.o(i.read_cd)
+    i.remove_chain                           0x0800478c   Section        0  ff.o(i.remove_chain)
+    remove_chain                             0x0800478d   Thumb Code   102  ff.o(i.remove_chain)
+    i.req_error                              0x080047f4   Section        0  main.o(i.req_error)
+    i.req_ses                                0x0800481c   Section        0  main.o(i.req_ses)
+    i.request_mode                           0x0800486c   Section        0  main.o(i.request_mode)
+    i.st_clust                               0x080048b4   Section        0  ff.o(i.st_clust)
+    st_clust                                 0x080048b5   Thumb Code    16  ff.o(i.st_clust)
+    i.sync_window                            0x080048c4   Section        0  ff.o(i.sync_window)
+    sync_window                              0x080048c5   Thumb Code    82  ff.o(i.sync_window)
+    i.transmit_71                            0x08004918   Section        0  main.o(i.transmit_71)
+    i.validate                               0x08004948   Section        0  ff.o(i.validate)
+    validate                                 0x08004949   Thumb Code    42  ff.o(i.validate)
+    .constdata                               0x08004972   Section       16  system_stm32f4xx.o(.constdata)
+    .constdata                               0x08004982   Section        8  system_stm32f4xx.o(.constdata)
+    .constdata                               0x0800498a   Section      172  ff.o(.constdata)
+    ExCvt                                    0x0800498a   Data         128  ff.o(.constdata)
+    vst                                      0x08004a0a   Data          22  ff.o(.constdata)
+    cst                                      0x08004a20   Data          22  ff.o(.constdata)
+    .constdata                               0x08004a38   Section       20  sd_diskio.o(.constdata)
+    .constdata                               0x08004a4c   Section      129  ctype_o.o(.constdata)
+    .constdata                               0x08004ad0   Section        4  ctype_o.o(.constdata)
+    table                                    0x08004ad0   Data           4  ctype_o.o(.constdata)
     .data                                    0x20000000   Section        4  system_stm32f4xx.o(.data)
     .data                                    0x20000004   Section        8  ff.o(.data)
     Fsid                                     0x20000004   Data           2  ff.o(.data)
@@ -2082,19 +2084,19 @@ Image Symbol Table
     get_toc                                  0x08003ee1   Thumb Code   254  main.o(i.get_toc)
     main                                     0x08004009   Thumb Code   444  main.o(i.main)
     open_gdi                                 0x08004249   Thumb Code   224  main.o(i.open_gdi)
-    process_cmd                              0x08004345   Thumb Code   120  main.o(i.process_cmd)
-    put_fat                                  0x080043c1   Thumb Code   286  ff.o(i.put_fat)
-    read_cd                                  0x080044e1   Thumb Code   264  main.o(i.read_cd)
-    req_error                                0x08004665   Thumb Code    32  main.o(i.req_error)
-    req_ses                                  0x0800468d   Thumb Code    66  main.o(i.req_ses)
-    request_mode                             0x080046dd   Thumb Code    56  main.o(i.request_mode)
-    transmit_71                              0x08004789   Thumb Code    40  main.o(i.transmit_71)
-    AHBPrescTable                            0x080047e2   Data          16  system_stm32f4xx.o(.constdata)
-    APBPrescTable                            0x080047f2   Data           8  system_stm32f4xx.o(.constdata)
-    SD_Driver                                0x080048a8   Data          20  sd_diskio.o(.constdata)
-    __ctype_table                            0x080048bc   Data         129  ctype_o.o(.constdata)
-    Region$$Table$$Base                      0x08004944   Number         0  anon$$obj.o(Region$$Table)
-    Region$$Table$$Limit                     0x08004964   Number         0  anon$$obj.o(Region$$Table)
+    process_cmd                              0x08004345   Thumb Code   114  main.o(i.process_cmd)
+    put_fat                                  0x080043bd   Thumb Code   286  ff.o(i.put_fat)
+    read_cd                                  0x080044dd   Thumb Code   664  main.o(i.read_cd)
+    req_error                                0x080047f5   Thumb Code    32  main.o(i.req_error)
+    req_ses                                  0x0800481d   Thumb Code    66  main.o(i.req_ses)
+    request_mode                             0x0800486d   Thumb Code    56  main.o(i.request_mode)
+    transmit_71                              0x08004919   Thumb Code    40  main.o(i.transmit_71)
+    AHBPrescTable                            0x08004972   Data          16  system_stm32f4xx.o(.constdata)
+    APBPrescTable                            0x08004982   Data           8  system_stm32f4xx.o(.constdata)
+    SD_Driver                                0x08004a38   Data          20  sd_diskio.o(.constdata)
+    __ctype_table                            0x08004a4c   Data         129  ctype_o.o(.constdata)
+    Region$$Table$$Base                      0x08004ad4   Number         0  anon$$obj.o(Region$$Table)
+    Region$$Table$$Limit                     0x08004af4   Number         0  anon$$obj.o(Region$$Table)
     SystemCoreClock                          0x20000000   Data           4  system_stm32f4xx.o(.data)
     uwTick                                   0x20000010   Data           4  stm32f4xx_hal.o(.data)
     image_num                                0x20000014   Data           1  main.o(.data)
@@ -2128,9 +2130,9 @@ Memory Map of the image
 
   Image Entry point : 0x08000189
 
-  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x00004994, Max: 0x00100000, ABSOLUTE)
+  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x00004b24, Max: 0x00100000, ABSOLUTE)
 
-    Execution Region ER_IROM1 (Exec base: 0x08000000, Load base: 0x08000000, Size: 0x00004964, Max: 0x00100000, ABSOLUTE)
+    Execution Region ER_IROM1 (Exec base: 0x08000000, Load base: 0x08000000, Size: 0x00004af4, Max: 0x00100000, ABSOLUTE)
 
     Exec Addr    Load Addr    Size         Type   Attr      Idx    E Section Name        Object
 
@@ -2325,48 +2327,48 @@ Memory Map of the image
     0x08004202   0x08004202   0x0000000e   Code   RO          261    i.mem_set           ff.o
     0x08004210   0x08004210   0x00000038   Code   RO          262    i.move_window       ff.o
     0x08004248   0x08004248   0x000000fc   Code   RO         2862    i.open_gdi          main.o
-    0x08004344   0x08004344   0x0000007c   Code   RO         2863    i.process_cmd       main.o
-    0x080043c0   0x080043c0   0x0000011e   Code   RO          263    i.put_fat           ff.o
-    0x080044de   0x080044de   0x00000002   PAD
-    0x080044e0   0x080044e0   0x0000011c   Code   RO         2864    i.read_cd           main.o
-    0x080045fc   0x080045fc   0x00000066   Code   RO          265    i.remove_chain      ff.o
-    0x08004662   0x08004662   0x00000002   PAD
-    0x08004664   0x08004664   0x00000028   Code   RO         2865    i.req_error         main.o
-    0x0800468c   0x0800468c   0x00000050   Code   RO         2866    i.req_ses           main.o
-    0x080046dc   0x080046dc   0x00000048   Code   RO         2867    i.request_mode      main.o
-    0x08004724   0x08004724   0x00000010   Code   RO          266    i.st_clust          ff.o
-    0x08004734   0x08004734   0x00000052   Code   RO          268    i.sync_window       ff.o
-    0x08004786   0x08004786   0x00000002   PAD
-    0x08004788   0x08004788   0x00000030   Code   RO         2868    i.transmit_71       main.o
-    0x080047b8   0x080047b8   0x0000002a   Code   RO          269    i.validate          ff.o
-    0x080047e2   0x080047e2   0x00000010   Data   RO           15    .constdata          system_stm32f4xx.o
-    0x080047f2   0x080047f2   0x00000008   Data   RO           16    .constdata          system_stm32f4xx.o
-    0x080047fa   0x080047fa   0x000000ac   Data   RO          270    .constdata          ff.o
-    0x080048a6   0x080048a6   0x00000002   PAD
-    0x080048a8   0x080048a8   0x00000014   Data   RO          607    .constdata          sd_diskio.o
-    0x080048bc   0x080048bc   0x00000081   Data   RO         3562    .constdata          mc_w.l(ctype_o.o)
-    0x0800493d   0x0800493d   0x00000003   PAD
-    0x08004940   0x08004940   0x00000004   Data   RO         3563    .constdata          mc_w.l(ctype_o.o)
-    0x08004944   0x08004944   0x00000020   Data   RO         3596    Region$$Table       anon$$obj.o
+    0x08004344   0x08004344   0x00000078   Code   RO         2863    i.process_cmd       main.o
+    0x080043bc   0x080043bc   0x0000011e   Code   RO          263    i.put_fat           ff.o
+    0x080044da   0x080044da   0x00000002   PAD
+    0x080044dc   0x080044dc   0x000002b0   Code   RO         2864    i.read_cd           main.o
+    0x0800478c   0x0800478c   0x00000066   Code   RO          265    i.remove_chain      ff.o
+    0x080047f2   0x080047f2   0x00000002   PAD
+    0x080047f4   0x080047f4   0x00000028   Code   RO         2865    i.req_error         main.o
+    0x0800481c   0x0800481c   0x00000050   Code   RO         2866    i.req_ses           main.o
+    0x0800486c   0x0800486c   0x00000048   Code   RO         2867    i.request_mode      main.o
+    0x080048b4   0x080048b4   0x00000010   Code   RO          266    i.st_clust          ff.o
+    0x080048c4   0x080048c4   0x00000052   Code   RO          268    i.sync_window       ff.o
+    0x08004916   0x08004916   0x00000002   PAD
+    0x08004918   0x08004918   0x00000030   Code   RO         2868    i.transmit_71       main.o
+    0x08004948   0x08004948   0x0000002a   Code   RO          269    i.validate          ff.o
+    0x08004972   0x08004972   0x00000010   Data   RO           15    .constdata          system_stm32f4xx.o
+    0x08004982   0x08004982   0x00000008   Data   RO           16    .constdata          system_stm32f4xx.o
+    0x0800498a   0x0800498a   0x000000ac   Data   RO          270    .constdata          ff.o
+    0x08004a36   0x08004a36   0x00000002   PAD
+    0x08004a38   0x08004a38   0x00000014   Data   RO          607    .constdata          sd_diskio.o
+    0x08004a4c   0x08004a4c   0x00000081   Data   RO         3562    .constdata          mc_w.l(ctype_o.o)
+    0x08004acd   0x08004acd   0x00000003   PAD
+    0x08004ad0   0x08004ad0   0x00000004   Data   RO         3563    .constdata          mc_w.l(ctype_o.o)
+    0x08004ad4   0x08004ad4   0x00000020   Data   RO         3596    Region$$Table       anon$$obj.o
 
 
-    Execution Region RW_IRAM1 (Exec base: 0x20000000, Load base: 0x08004964, Size: 0x0000d9f0, Max: 0x00020000, ABSOLUTE)
+    Execution Region RW_IRAM1 (Exec base: 0x20000000, Load base: 0x08004af4, Size: 0x0000d9f0, Max: 0x00020000, ABSOLUTE)
 
     Exec Addr    Load Addr    Size         Type   Attr      Idx    E Section Name        Object
 
-    0x20000000   0x08004964   0x00000004   Data   RW           17    .data               system_stm32f4xx.o
-    0x20000004   0x08004968   0x00000008   Data   RW          271    .data               ff.o
-    0x2000000c   0x08004970   0x00000001   Data   RW          608    .data               sd_diskio.o
-    0x2000000d   0x08004971   0x00000003   PAD
-    0x20000010   0x08004974   0x00000004   Data   RW         1860    .data               stm32f4xx_hal.o
-    0x20000014   0x08004978   0x0000000c   Data   RW         2871    .data               main.o
-    0x20000020   0x08004984   0x00000005   Data   RW         3148    .data               fatfs.o
-    0x20000025   0x08004989   0x00000003   PAD
-    0x20000028   0x0800498c   0x00000004   Data   RW         3241    .data               mc_w.l(strtok.o)
-    0x2000002c   0x08004990   0x00000004   Data   RW         3535    .data               mc_w.l(errno.o)
+    0x20000000   0x08004af4   0x00000004   Data   RW           17    .data               system_stm32f4xx.o
+    0x20000004   0x08004af8   0x00000008   Data   RW          271    .data               ff.o
+    0x2000000c   0x08004b00   0x00000001   Data   RW          608    .data               sd_diskio.o
+    0x2000000d   0x08004b01   0x00000003   PAD
+    0x20000010   0x08004b04   0x00000004   Data   RW         1860    .data               stm32f4xx_hal.o
+    0x20000014   0x08004b08   0x0000000c   Data   RW         2871    .data               main.o
+    0x20000020   0x08004b14   0x00000005   Data   RW         3148    .data               fatfs.o
+    0x20000025   0x08004b19   0x00000003   PAD
+    0x20000028   0x08004b1c   0x00000004   Data   RW         3241    .data               mc_w.l(strtok.o)
+    0x2000002c   0x08004b20   0x00000004   Data   RW         3535    .data               mc_w.l(errno.o)
     0x20000030        -       0x0000000c   Zero   RW          525    .bss                ff_gen_drv.o
     0x2000003c        -       0x0000d5b0   Zero   RW         2869    .bss                main.o
-    0x2000d5ec   0x08004994   0x00000004   PAD
+    0x2000d5ec   0x08004b24   0x00000004   PAD
     0x2000d5f0        -       0x00000400   Zero   RW            1    STACK               startup_stm32f407xx.o
 
 
@@ -2382,7 +2384,7 @@ Image component sizes
         32         10          0          5          0       1546   fatfs.o
       4802         42        172          8          0      34525   ff.o
         70          4          0          0         12       1735   ff_gen_drv.o
-      2084        206          0         12      54704      11290   main.o
+      2484        212          0         12      54704      11458   main.o
        264         34         20          1          0       4736   sd_diskio.o
         36          8        392          0       1024        868   startup_stm32f407xx.o
        148         22          0          4          0       4659   stm32f4xx_hal.o
@@ -2399,7 +2401,7 @@ Image component sizes
         84         18         24          4          0     678379   system_stm32f4xx.o
 
     ----------------------------------------------------------------------
-     16918        644        642         40      55744     850288   Object Totals
+     17318        650        642         40      55744     850456   Object Totals
          0          0         32          0          0          0   (incl. Generated)
         34          0          2          6          4          0   (incl. Padding)
 
@@ -2453,15 +2455,15 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   
 
-     18010        684        778         48      55744     836816   Grand Totals
-     18010        684        778         48      55744     836816   ELF Image Totals
-     18010        684        778         48          0          0   ROM Totals
+     18410        690        778         48      55744     836984   Grand Totals
+     18410        690        778         48      55744     836984   ELF Image Totals
+     18410        690        778         48          0          0   ROM Totals
 
 ==============================================================================
 
-    Total RO  Size (Code + RO Data)                18788 (  18.35kB)
+    Total RO  Size (Code + RO Data)                19188 (  18.74kB)
     Total RW  Size (RW Data + ZI Data)             55792 (  54.48kB)
-    Total ROM Size (Code + RO Data + RW Data)      18836 (  18.39kB)
+    Total ROM Size (Code + RO Data + RW Data)      19236 (  18.79kB)
 
 ==============================================================================
 

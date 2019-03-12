@@ -270,13 +270,11 @@ GPIO_0[2], GPIO_0[1], GPIO_0[6], GPIO_0[5], GPIO_0[10], GPIO_0[9], GPIO_0[14], G
 
 clk_divide za_warudo(.clk(CLOCK_50), .clk_out(uart_clk));
 
-//test_uart test(.clk(CLOCK_50), .uart_start(uart_start), .cmd_buf(cmd_buf));
-
 uart_transmit u_art_transmitting(.clk(uart_clk), .clk_50(CLOCK_50), .start(uart_start), .cmd_buf(cmd_buf), 
 .data_out(GPIO_1[25]));
 
 spi_recieve not_sega_packet_interface(.clk(GPIO_1[33]), .data_in(GPIO_1[29]), .bytes_recieved(spi_bytes_in), .clk_50(CLOCK_50),
-.byte_out(spi_to_buf), .address(spi_address), .reset(spi_reset_count), .write_pulse(write_pulse));
+.data(spi_to_buf), .address(spi_address), .reset(spi_reset_count), .write_pulse(write_pulse));
 
 buffer_small actual_buffer(
 	.address(mem_address),
@@ -285,13 +283,19 @@ buffer_small actual_buffer(
 	.wren(write_pulse),
 	.q(buffer_word_out)
 	);
+	
+//wire clk_100;
+//fast clk_twice(.inclk0(CLOCK_50), .c0(clk_100));
 
+assign mem_address = (mem_buf_read) ? ide_address : spi_address;
+	
 /*memory_buffer cant_remember(.clk(CLOCK_50), .read_pulse(mem_buf_read), .spi_count(spi_bit_count),
 .spi_byte_in(spi_to_buf), .address(mem_address), .write_pulse(write_pulse));*/
 
+//test_uart test(.clk(CLOCK_50), .uart_start(uart_start), .cmd_buf(cmd_buf));
+
 //sync n_sync(.clk_fpga(uart_clk), .clk_ps2(CLOCK_50), .flag_in(uart_start), .flag_out(uart_start_synced)); //clock domain crossing
 
-assign mem_address = (mem_buf_read) ? ide_address : spi_address;
 
 /*mem_buf_ram actual_buffer(
 	.address(mem_address),

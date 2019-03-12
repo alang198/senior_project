@@ -38,19 +38,19 @@ logic [15:0]data_out = 16'bz;
 
 logic dout_en;
 //lifted almost directly from ice; want something that confirms works for tristate
-assign dout_en = ~read_cur & ((~cs[0])|((~cs[1])&(da[2:1]==2'b11))|dma_en) & ~drive_sel[4]; 
+assign dout_en = ~read_cur & ((~cs[0])|((~cs[1])&(da[2:1]==2'b11))|~dmack) & ~drive_sel[4]; 
 assign data_pins = ((dout_en == 1'b1)) ? data_out : 16'bz; //tristate buffer
 //assign data_in = data_pins;
 
 reg int_rq = 1'b0; //logic controller for int_rq
-assign intrq = ((drive_sel[4] == 1'b0)) ? int_rq : 1'bz;
+assign intrq = ((drive_sel[4] == 1'b0) && (drive_sel[1] == 1'b0)) ? int_rq : 1'bz;
 assign iordy = 1'bz; //always high impedance
 
 logic dma_en; 
 logic dma_flag; //0 = pio/off; 1 = DMA
 logic dma_rq; //controls dmarq level
 
-assign dma_en = ~dmack & dma_flag & ~drive_sel[4]; //controls if datalines are asserted or not
+assign dma_en = dma_flag & ~drive_sel[4]; //controls if datalines are asserted or not
 assign dmarq = (dma_en) ? dma_rq : 1'bz;
 
 
@@ -88,7 +88,8 @@ reg cmd_done;
 parameter ide_wait = 0, process_command = 1, recieve_spi = 2, transmit_spi = 4, dma_transfer = 8,
 dma_transfer_last = 16, recieve_data = 32, do_test_unit = 64, do_set_mode = 128, pio_transfer_setup = 256,
 send_to_dc = 512, pio_transfer = 1024, pio_transfer_last = 2048, set_mode_recieve = 4096, do_req_mode = 8192,
-transmit_req_mode_rev = 16384, transmit_zeros = 32768, do_cmd71 = 65536, do_cmd71_transmit = 131072;
+transmit_req_mode_rev = 16384, transmit_zeros = 32768, do_cmd71 = 65536, do_cmd71_transmit = 131072,
+do_req_error = 262144, recieve_data_dma = 524288, recieve_data_dma1 = 1048576;
 
 //reg [15:0]buffer_count;
 reg [15:0]count_to;
@@ -105,10 +106,22 @@ logic read_pulse;
 logic read_old;
 logic read_cur;
 
+//update buffer pulse
+//logic read_pulse_dma;
+//logic read_dma_old;
+//logic read_dma_cur;
+//assign read_pulse_dma = ~read_cur & read_old;
+
+//cd_read stuff
+logic [15:0]sectors_remaining;
+logic [15:0]dma_bytes_sent;
+logic [15:0]dma_bytes_to_send;
+logic [7:0]dma_transfers_done;
+
 //assign read_cur = rd;
 
 //generate read pulse
-assign read_pulse = ~read_old & read_cur; //rising edge confirmed 
+assign read_pulse = read_old & ~read_cur; //rising edge confirmed 
 always_ff@(posedge clk)
 begin
 	read_old <= read_cur;
@@ -136,37 +149,36 @@ begin
 
 	//sending data to Dreamcast
 	//look up table on page 12 of SPI format datasheet
-	if(read_cur == 1'b0) 
+
+	if(~dmack) data_out <= buffer_data_out;
+	else
 	begin
-		if(dma_en) data_out <= buffer_data_out;
-		else
-		begin
-			case({cs[0], cs[1], da})
-				//these don't appear to do anything
-				//x in verilog = don't care, simple stuff
-				//5'b11xxx: data_out <= 16'bz;
-				//5'b100xx: data_out <= 16'bz;
-				//5'b1010x: data_out <= 16'bz;
-				//these do things
-				5'b10110: data_out <= status_alt;
-				5'b01000: data_out <= buffer_data_out;
-				5'b01001: data_out <= error_reg;
-				5'b01010: data_out <= int_reason;
-				5'b01011: data_out <= sector_num;
-				5'b01100: data_out <= {8'h00, byte_count[7:0]};
-				5'b01101: data_out <= {8'h00, byte_count[15:8]};
-				5'b01110: data_out <= drive_sel;
-				5'b01111: 
-				begin
-					//status[7] <= 1'b0;
-					if(drive_sel[4] == 0) int_rq <= 1'b0; //reading status clears this; alt status does not
-					data_out <= status;
-				end
-				default: data_out <= 0;
-				//there will never be a case where both CS lines are asserted.
-			endcase
-		end
+		case({cs[0], cs[1], da})
+			//these don't appear to do anything
+			//x in verilog = don't care, simple stuff
+			//5'b11xxx: data_out <= 16'bz;
+			//5'b100xx: data_out <= 16'bz;
+			//5'b1010x: data_out <= 16'bz;
+			//these do things
+			5'b10110: data_out <= status_alt;
+			5'b01000: data_out <= buffer_data_out;
+			5'b01001: data_out <= error_reg;
+			5'b01010: data_out <= int_reason;
+			5'b01011: data_out <= sector_num;
+			5'b01100: data_out <= {8'h00, byte_count[7:0]};
+			5'b01101: data_out <= {8'h00, byte_count[15:8]};
+			5'b01110: data_out <= drive_sel;
+			5'b01111: 
+			begin
+				//status[7] <= 1'b0;
+				if(drive_sel[4] == 0) int_rq <= 1'b0; //reading status clears this; alt status does not
+				data_out <= status;
+			end
+			default: data_out <= 0;
+			//there will never be a case where both CS lines are asserted.
+		endcase
 	end
+
 	
 	
 	//latching data from Dreamcast
@@ -202,11 +214,11 @@ begin
 		error_reg <= 16'h0000;
 		features <= 16'h0000;
 		sector_count <= 16'h0000;
-		sector_num <= 16'h0082; //find out what values can go here; assume GD. REQ_STAT gets it's data from here
+		sector_num <= 16'h0081; //find out what values can go here; assume GD. REQ_STAT gets it's data from here
 		drive_sel <= 16'h0000;
-		int_reason <= 16'h0003;
+		int_reason <= 16'h0000;
 		status <= 16'h0050;
-		data_out <= 16'hFFFF;
+		data_out <= 16'h0000;
 		state <= ide_wait;
 	end
 
@@ -216,6 +228,11 @@ begin
 	//set DRQ (in status); assert INTRQ after clearing busy bit	
 	//INTRQ assert means 1
 	//ice uses seccnt to refer to interupt reason for SOME REASON
+	ide_wait:
+	begin
+		reset_bytes_transmitted <= 0;
+	end
+	
 	process_command:
 	begin
 	
@@ -241,13 +258,30 @@ begin
 				error_reg <= 0;
 				status <= 8'h50;
 				int_rq <= 1'b1;
+				
+				state <= ide_wait;
+			end
+			
+			8'h08:
+			begin
+				//reset
+				status <= 8'h50;
+				dma_rq <= 0;
+				int_rq <= 0;
+				features <= 0;
+				error_reg <= 0;
+				int_reason <= 0;
+				
+				reset_bytes_transmitted <= 0;
+				bytes_transfered <= 0;
+				state <= ide_wait;
 			end
 			
 			default:
 			begin
 				error_reg <= 8'h04;
 				status <= 8'h51;
-				//int_rq <= 1'b1;
+				int_rq <= 1'b1;
 				
 				state <= ide_wait;
 			end
@@ -287,6 +321,19 @@ begin
 			state <= do_set_mode; //set mode
 			byte_count <= 10;
 		end
+		else if(spi_cmd == 8'h30)
+		begin
+			//byte_count <= cmd_buf[10] << 11;
+			sectors_remaining <= (cmd_buf[9] << 8) | cmd_buf[10];
+			state <= recieve_data_dma;
+			uart_start <= 1'b1;
+		end
+		else if(spi_cmd == 8'h13)  //req_error
+		begin
+			state <= do_req_error;
+			buffer_data_out <= 0;
+			bytes_transfered <= 0;
+		end
 		else if(spi_cmd == 8'h14) byte_count <= 408; //get_toc
 		else if(spi_cmd == 8'h15) byte_count <= 6; //req_ses
 		else if((spi_cmd == 8'h70) || (spi_cmd == 8'h00)) state <= do_test_unit; //test unit
@@ -295,7 +342,7 @@ begin
 		else if(spi_cmd == 8'h13) byte_count <= 10; //req_error
 		else if((spi_cmd == 8'h40) && (cmd_buf[1] != 8'h00)) byte_count <= 14; //cd_scd
 		
-		if((spi_cmd != 8'h12) && (spi_cmd != 8'h70) && (spi_cmd != 8'h00) && (spi_cmd != 8'h11) && (spi_cmd != 8'h71)) 
+		if((spi_cmd != 8'h12) && (spi_cmd != 8'h70) && (spi_cmd != 8'h00) && (spi_cmd != 8'h11) && (spi_cmd != 8'h71) && (spi_cmd != 8'h13) && (spi_cmd != 8'h30)) 
 		begin
 			
 			if(debug_count == 50000000)
@@ -305,6 +352,16 @@ begin
 			end
 			else debug_count <= debug_count + 1'b1;
 		end
+	end
+	
+	do_req_error:
+	begin
+		int_reason <= 8'h02;
+		byte_count <= 10;
+		state <= 8'h58;
+
+		if(bytes_transfered >= byte_count) state <= pio_transfer_last;
+		if((read_pulse == 1'b1) && ({cs[0], cs[1], da} == 5'b01000) && ~drive_sel[4]) bytes_transfered <= bytes_transfered + 2;
 	end
 	
 	do_cmd71:
@@ -343,13 +400,46 @@ begin
 		if((bytes_in >= byte_count)) state <= send_to_dc;
 	end
 	
+	recieve_data_dma:
+	begin
+		uart_start <= 1'b0;
+		reset_bytes_transmitted <= 1'b0;
+		dma_bytes_sent <= 0;
+		
+		if(sectors_remaining == 0) state <= pio_transfer_last;
+		else if(sectors_remaining > 15) //send 15 sectors
+		begin
+			sectors_remaining <= sectors_remaining - 15;
+			dma_bytes_to_send <= 30720;
+			state <= recieve_data_dma1;
+		end
+		
+		else //send however many sectors are left
+		begin
+			sectors_remaining <= 0;
+			dma_bytes_to_send <= sectors_remaining << 11;
+			state <= recieve_data_dma1;
+		end
+		
+	end
+	
+	recieve_data_dma1:
+	begin
+		if(bytes_in >= dma_bytes_to_send) state <= send_to_dc;
+	end
+	
 	send_to_dc:
 	begin
 		//check if PIO or DMA transfer
-		if(features[0] == 1'b1) state <= dma_transfer; //DMA
+		if(features[0] == 1'b1) 
+		begin
+			state <= dma_transfer; //DMA
+			buffer_read <= 1;
+			read_addr <= 1;
+		end
 		else state <= pio_transfer_setup;
 		
-		buffer_read <= 1'b1;
+		//buffer_read <= 1'b1;
 		bytes_transfered <= 0;
 	end
 	
@@ -360,40 +450,48 @@ begin
 		
 		if(buffer_read == 1'b1)
 		begin
-			buffer_read <= 0;
+			//buffer_read <= 0;
 			buffer_data_out[15:8] <= word_in[7:0];
 			buffer_data_out[7:0] <= word_in[15:8];
-		end
-		
-		//update value from buffer
-		if((read_pulse == 1'b1) && (dma_en == 1'b1)) 
-		begin
-			buffer_read <= 1'b1;
-			bytes_transfered <= bytes_transfered + 2;
-			
-			if(read_addr == 32767) read_addr <= 0;
-			else read_addr <= read_addr + 1'b1;
+			//buffer_data_out <= {word_in[0], word_in[1],word_in[2],word_in[3],word_in[4],word_in[5],word_in[6],
+			//	word_in[7],word_in[8],word_in[9],word_in[10],word_in[11],word_in[12],word_in[13],word_in[14],word_in[15]};
 		end
 		
 		//last word
-		if(bytes_transfered >= byte_count)
+		if(dma_bytes_sent >= dma_bytes_to_send)
 		begin
 			state <= dma_transfer_last;
 			
 			dma_rq <= 1'b0; //negate DMARQ
-			dma_flag <= 1'b0; //disable DMA
+			//dma_flag <= 1'b0; //disable DMA
 		end
+		
+		//update value from buffer
+		else if((read_pulse) && (~dmack)) 
+		begin
+			//buffer_read <= 1'b1;
+			dma_bytes_sent <= dma_bytes_sent + 2;
+			
+			read_addr <= read_addr + 1'b1;
+		end
+		
+		
 	end
 	
 	dma_transfer_last:
 	begin
-		error_reg <= 0; //no errors
-		int_reason <= 3; //IO and CoD set
-		status <= 16'h0050; //BSY and DRQ
+		//error_reg <= 0; //no errors
+		//int_reason <= 3; //IO and CoD set
+		//status <= 16'h0050; //BSY and DRQ
+		buffer_read <= 0;
+		//int_rq <= 1'b1;
+		if(sectors_remaining != 0) uart_start <= 1'b1;
+		reset_bytes_transmitted <= 1'b1;
 		
-		int_rq <= 1'b1;
+		state <= recieve_data_dma;
+		sector_num <= 8'h82;
 		
-		state <= ide_wait;
+		//state <= ide_wait;
 	end
 	
 	do_test_unit:
@@ -413,7 +511,7 @@ begin
 		status <= 8'h58;
 		
 		int_rq <= 1'b1;
-		read_addr <= 0;
+		read_addr <= 1;
 		
 		buffer_read <= 1'b1;
 		bytes_transfered <= 0;
@@ -455,6 +553,7 @@ begin
 		int_reason <= 8'h03;
 		
 		int_rq <= 1'b1;
+		buffer_read <= 0;
 		
 		state <= ide_wait;
 	end
@@ -541,6 +640,7 @@ begin
 	default:
 	begin
 		status <= status;
+		//state <= ide_wait;
 	end
 	
 	endcase
@@ -566,6 +666,7 @@ begin
 	
 end
 
+logic debug_flag;
 logic [7:0]addr_count;
 logic [7:0]write_buffer_count;
 logic wr_flag;

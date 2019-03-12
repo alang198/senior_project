@@ -56,7 +56,6 @@
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
-//Handle Types (put these in read/write APIs to serial ports)
 SD_HandleTypeDef hsd;
 
 SPI_HandleTypeDef hspi1;
@@ -70,7 +69,6 @@ UART_HandleTypeDef huart4;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-//Config funtion prototypes
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SDIO_SD_Init(void);
@@ -82,15 +80,15 @@ static void MX_UART4_Init(void);
 /* Private function prototypes -----------------------------------------------*/
 //Read .gdi
 uint8_t open_gdi(void);
-void process_cmd(uint8_t);
-void get_toc(void);
-void req_ses(void);
-void transmit_71(void);
+void process_cmd(uint8_t); //switch to appropriate cmd handler
+void get_toc(void); //read either low density or high density table of contents
+void req_ses(void); //get session information
+void transmit_71(void); //transmit cmd 71 (done on FPGA)
 //void test_unit(void); (do on FPGA)
-void request_mode(void);
-void req_error(void);
-void read_cd(uint8_t);
-void get_scd(void);
+void request_mode(void); //return "mode" information (revision number)
+void req_error(void); //return error status (done on FPGA)
+void read_cd(uint8_t); //read specified number of sectors
+void get_scd(void); //get subcode information
 void cd_play(void);
 
 /* USER CODE END PFP */
@@ -119,7 +117,8 @@ uint8_t error_code = 0xFF;
 FIL gdi_file;
 /* USER CODE END 0 */
 
-int main(void){
+int main(void)
+{
 
   /* USER CODE BEGIN 1 */
 	//fatfs related variables
@@ -375,7 +374,6 @@ void process_cmd(uint8_t cmd){
 		//NOTE: standard 3 track games will load audio data through here rather than messing with the cd audio commands
 		//treat as normal read
 		case 0x30:
-		case 0x31:
 			read_cd(cmd);
 			break;
 		
@@ -470,7 +468,7 @@ void get_toc(){
 void req_ses(){
 	
 	//not incorperating gdda yet, so write 0x02 to status half (half = half byte)
-	if(gdda_playing == 0) data_buf[0] = 0x02; //disc status = standby
+	if(gdda_playing == 0) data_buf[0] = 0x01; //disc status = standby
 	else data_buf[0] = 0x03; //cd playback going
 	
 	data_buf[1] = 0x00; //field is empty
@@ -548,20 +546,22 @@ void req_error(){
 //read the image file
 void read_cd(uint8_t cmd){
 	
-	uint32_t lba_addr = 0; //address recieved from Dreamcast
-	uint32_t byte_addr = 0; //address to send to FATFS
-	uint32_t transfer_length = 0; //number of sectors to transfer
-	uint8_t cdda_flag = 0; //send either 2352 bytes or 2048 bytes
-	uint8_t count = 0;
-	uint8_t file_index = 0;
+	volatile uint32_t lba_addr = 0; //address recieved from Dreamcast
+	volatile uint32_t byte_addr = 0; //address to send to FATFS
+	volatile uint32_t transfer_length = 0; //number of sectors to transfer
+	volatile uint8_t cdda_flag = 0; //send either 2352 bytes or 2048 bytes
+	volatile uint8_t count = 0;
+	volatile uint16_t sectors_left = 0;
+	volatile uint8_t file_index = 0;
+	uint8_t temp_buf[12] = {0};
 	
 	//check command type for getting transfer length
-	if(cmd == 0x31){
-		transfer_length = (cmd_buf[5] << 8) | (cmd_buf[6]);
-	}
-	else{
-		transfer_length = (cmd_buf[7] << 16) | (cmd_buf[8] << 8) | (cmd_buf[9]);
-	}
+	//if(cmd == 0x31){
+		//transfer_length = (cmd_buf[5] << 8) | (cmd_buf[6]);
+	//}
+	
+	transfer_length = (cmd_buf[7] << 16) | (cmd_buf[8] << 8) | (cmd_buf[9]);
+	sectors_left = transfer_length;
 	
 	//check if address is MSF (minutes, seconds, frames) or FAD; if MSF convert to FAD
 	//is MSF
@@ -587,10 +587,12 @@ void read_cd(uint8_t cmd){
 	//cdda or other requests all 2352 bytes back; anything else requests only user data 2048 bytes
 	//mode1; 12 sync bytes, 4 header bytes, 2048 user data, 288 EDC/ECC
 	
+	count = file_count - 1;
+	
 	//find which file to check
-	while(count < file_count){
-		if(lba[count] <= lba_addr) break;
-		count = count + 1;
+	while(count != 0){
+		if(lba_addr >= lba[count]) break;
+		count = count - 1;
 	}
 	
 	file_index = count;
@@ -599,11 +601,20 @@ void read_cd(uint8_t cmd){
 	//convert lba_addr to byte_addr
 	byte_addr = (lba_addr - lba[file_index]) * 2352;
 	
+	volatile FRESULT test_result;
+
 	//begin reading data
-	f_lseek(&files[file_index], byte_addr);
+	test_result = f_lseek(&files[file_index], byte_addr);
+	
+	transfer_length = (sectors_left > 15) ? 15 : sectors_left;
+	sectors_left = sectors_left - transfer_length;
+	
 	while(count < transfer_length){
 		
-		if(f_read(&files[file_index], data_buf1, 2352, &junk) != FR_OK){
+		test_result = f_read(&files[file_index], data_buf1, 2352, &junk);
+		
+		if(test_result != FR_OK){
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET); //turn on error LED
 			HAL_UART_Transmit(&huart4, &error_code, 1, HAL_MAX_DELAY);
 			return;
 		}
@@ -618,6 +629,41 @@ void read_cd(uint8_t cmd){
 		}
 		
 		count = count + 1;
+	}
+	
+	while(sectors_left != 0){
+		while(temp_buf[0] == 0x00){
+			HAL_UART_Receive(&huart4, temp_buf, 12, HAL_MAX_DELAY);
+		}
+		
+		temp_buf[0] = 0;
+		
+		transfer_length = (sectors_left > 15) ? 15 : sectors_left;
+		sectors_left = sectors_left - transfer_length;
+		
+		count = 0;
+		
+		while(count < transfer_length){
+		
+			test_result = f_read(&files[file_index], data_buf1, 2352, &junk);
+			
+			if(test_result != FR_OK){
+				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET); //turn on error LED
+				HAL_UART_Transmit(&huart4, &error_code, 1, HAL_MAX_DELAY);
+				return;
+			}
+			
+			//check if we only send user data or not
+			if(cdda_flag == 0x00){
+				memcpy(data_buf, &data_buf1[16], 2048);
+				HAL_SPI_Transmit(&hspi1, data_buf, 2048, HAL_MAX_DELAY);
+			}
+			else{
+				HAL_SPI_Transmit(&hspi1, data_buf1, 2352, HAL_MAX_DELAY);
+			}
+			
+			count = count + 1;
+		}
 	}
 	
 	//reset file pointer
@@ -680,7 +726,9 @@ void cd_play(){
 	//interrupt vector needed, when buffer is empty read more frames replenish buffer
 }
 
-/* USER CODE END 3 */
+  /* USER CODE END 3 */
+
+
 
 /** System Clock Configuration
 */
