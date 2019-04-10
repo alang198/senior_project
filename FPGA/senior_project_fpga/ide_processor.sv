@@ -43,7 +43,7 @@ assign data_pins = ((dout_en == 1'b1)) ? data_out : 16'bz; //tristate buffer
 //assign data_in = data_pins;
 
 reg int_rq = 1'b0; //logic controller for int_rq
-assign intrq = ((drive_sel[4] == 1'b0) && (drive_sel[1] == 1'b0)) ? int_rq : 1'bz;
+assign intrq = ((drive_sel[4] == 1'b0) && (dev_control[1] == 1'b0)) ? int_rq : 1'bz;
 assign iordy = 1'bz; //always high impedance
 
 logic dma_en; 
@@ -252,9 +252,9 @@ begin
 				
 			end
 			
+			//set features (just need to set error and status then raise interrupt)
 			8'hEF:
 			begin
-				//set features (just need to set error and status then raise interrupt)
 				error_reg <= 0;
 				status <= 8'h50;
 				int_rq <= 1'b1;
@@ -262,9 +262,10 @@ begin
 				state <= ide_wait;
 			end
 			
+			//soft reset
 			8'h08:
 			begin
-				//reset
+				
 				status <= 8'h50;
 				dma_rq <= 0;
 				int_rq <= 0;
@@ -331,6 +332,7 @@ begin
 		else if(spi_cmd == 8'h13)  //req_error
 		begin
 			state <= do_req_error;
+			int_rq <= 1'b1;
 			buffer_data_out <= 0;
 			bytes_transfered <= 0;
 		end
@@ -358,7 +360,7 @@ begin
 	begin
 		int_reason <= 8'h02;
 		byte_count <= 10;
-		state <= 8'h58;
+		status <= 8'h58;
 
 		if(bytes_transfered >= byte_count) state <= pio_transfer_last;
 		if((read_pulse == 1'b1) && ({cs[0], cs[1], da} == 5'b01000) && ~drive_sel[4]) bytes_transfered <= bytes_transfered + 2;
@@ -380,14 +382,15 @@ begin
 	
 	do_cmd71_transmit:
 	begin
-		if(bytes_transfered > 4) state <= pio_transfer_last;
+		if(bytes_transfered == 6) state <= pio_transfer_last;
 		
 		else if((read_pulse == 1'b1) && ({cs[0], cs[1], da} == 5'b01000) && ~drive_sel[4])
 		begin
-			if(bytes_transfered == 0) buffer_data_out <= 16'hCA0D;
-			else if(bytes_transfered == 2) buffer_data_out <= 16'h1F6A;
+			if(bytes_transfered == 2) buffer_data_out <= 16'hCA0D;
+			else if(bytes_transfered == 4) buffer_data_out <= 16'h1F6A;
 			
 			bytes_transfered <= bytes_transfered + 2;
+			
 			
 			state <= do_cmd71_transmit;
 		end
@@ -453,8 +456,6 @@ begin
 			//buffer_read <= 0;
 			buffer_data_out[15:8] <= word_in[7:0];
 			buffer_data_out[7:0] <= word_in[15:8];
-			//buffer_data_out <= {word_in[0], word_in[1],word_in[2],word_in[3],word_in[4],word_in[5],word_in[6],
-			//	word_in[7],word_in[8],word_in[9],word_in[10],word_in[11],word_in[12],word_in[13],word_in[14],word_in[15]};
 		end
 		
 		//last word
@@ -480,18 +481,12 @@ begin
 	
 	dma_transfer_last:
 	begin
-		//error_reg <= 0; //no errors
-		//int_reason <= 3; //IO and CoD set
-		//status <= 16'h0050; //BSY and DRQ
 		buffer_read <= 0;
-		//int_rq <= 1'b1;
 		if(sectors_remaining != 0) uart_start <= 1'b1;
 		reset_bytes_transmitted <= 1'b1;
 		
 		state <= recieve_data_dma;
 		sector_num <= 8'h82;
-		
-		//state <= ide_wait;
 	end
 	
 	do_test_unit:
@@ -577,11 +572,13 @@ begin
 			status <= 8'h50;
 			int_reason <= 8'h03;
 			error_reg <= 0;
+			int_rq <= 1'b1;
 			
 			state <= ide_wait;
 		end
 	end
 	
+	/*CHECK FIRST WORD*/
 	do_req_mode:
 	begin
 		int_reason <= 8'h02; //I/O set, CoD clear
@@ -604,20 +601,22 @@ begin
 		begin
 			byte_count <= 10;
 			state <= transmit_zeros;
+			buffer_data_out <= 0;
 		end
 	end
 	
 	transmit_req_mode_rev:
 	begin
-		if(bytes_transfered > 6) state <= pio_transfer_last;
+		if(bytes_transfered == 8) state <= pio_transfer_last;
 		
-		else if((read_pulse == 1'b1) && ({cs[0], cs[1], da} == 5'b01000) && ~drive_sel[4])
+		if((read_pulse == 1'b1) && ({cs[0], cs[1], da} == 5'b01000) && ~drive_sel[4])
 		begin
-			if(bytes_transfered == 0) buffer_data_out <= 16'h2076; //"v "
-			else if(bytes_transfered == 2) buffer_data_out <= 16'h2E35; //"5."
-			else if(bytes_transfered == 4) buffer_data_out <= 16'h3730; //"07"
+			if(bytes_transfered == 2) buffer_data_out <= 16'h2076; //"v "
+			else if(bytes_transfered == 4) buffer_data_out <= 16'h2E35; //"5."
+			else if(bytes_transfered == 8) buffer_data_out <= 16'h3730; //"07"
 			
 			bytes_transfered <= bytes_transfered + 2;
+			
 			
 			state <= transmit_req_mode_rev;
 		end
@@ -626,6 +625,7 @@ begin
 	transmit_zeros:
 	begin
 		buffer_data_out <= 0;
+		data_out <= 0;
 	
 		if(bytes_transfered >= byte_count) state <= pio_transfer_last;
 		

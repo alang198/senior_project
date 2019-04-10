@@ -389,6 +389,8 @@ void process_cmd(uint8_t cmd){
 			transmit_71();
 			break;
 	}
+	
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
 }
 
 //retrieve TOC from track 3 of .gdi
@@ -422,6 +424,7 @@ void get_toc(){
 		}
 		
 		HAL_SPI_Transmit(&hspi1, data_buf, 408, HAL_MAX_DELAY); //transmit over SPI
+		f_lseek(&files[2], (f_tell(&files[2]) - f_tell(&files[2])));
 	}
 	//low density TOC
 	else{
@@ -632,8 +635,12 @@ void read_cd(uint8_t cmd){
 	}
 	
 	while(sectors_left != 0){
+		
 		while(temp_buf[0] == 0x00){
-			HAL_UART_Receive(&huart4, temp_buf, 12, HAL_MAX_DELAY);
+			HAL_UART_Receive(&huart4, &temp_buf[0], 1, HAL_MAX_DELAY); //first character recieved
+			if(temp_buf[0] != 0){
+				HAL_UART_Receive(&huart4, &temp_buf[1], 11, HAL_MAX_DELAY); //get rest of the cmd
+			}
 		}
 		
 		temp_buf[0] = 0;
@@ -645,7 +652,10 @@ void read_cd(uint8_t cmd){
 		
 		while(count < transfer_length){
 		
-			test_result = f_read(&files[file_index], data_buf1, 2352, &junk);
+			test_result = f_read(&files[file_index], data_buf1, 588, &junk);
+			test_result = f_read(&files[file_index], &data_buf1[588], 588, &junk);
+			test_result = f_read(&files[file_index], &data_buf1[1176], 588, &junk);
+			test_result = f_read(&files[file_index], &data_buf1[1764], 588, &junk);
 			
 			if(test_result != FR_OK){
 				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET); //turn on error LED
@@ -728,8 +738,6 @@ void cd_play(){
 
   /* USER CODE END 3 */
 
-
-
 /** System Clock Configuration
 */
 void SystemClock_Config(void)
@@ -796,7 +804,7 @@ static void MX_SDIO_SD_Init(void)
   hsd.Init.ClockPowerSave = SDIO_CLOCK_POWER_SAVE_DISABLE;
   hsd.Init.BusWide = SDIO_BUS_WIDE_1B;
   hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
-  hsd.Init.ClockDiv = 10;
+  hsd.Init.ClockDiv = 8;
 
 }
 

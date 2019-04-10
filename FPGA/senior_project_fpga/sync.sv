@@ -8,7 +8,7 @@ module sync(
 
 reg flag_a;
 
-always@(negedge clk_ps2) flag_a <= flag_a ^ flag_in; //toggles on flag assertion
+always@(posedge clk_ps2) flag_a <= flag_a ^ flag_in; //toggles on flag assertion
 
 reg [2:0] sync_to_main;
 always@(posedge clk_fpga) sync_to_main <= {sync_to_main[1:0], flag_a}; //move to 50MHz clock
